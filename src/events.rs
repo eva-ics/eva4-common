@@ -1,0 +1,406 @@
+use crate::value::{Value, ValueOption, ValueOptionOwned};
+use crate::Error;
+use crate::{ItemStatus, IEID, OID};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::hash::{Hash, Hasher};
+use std::str::FromStr;
+
+pub const RAW_STATE_TOPIC: &str = "RAW/";
+pub const LOCAL_STATE_TOPIC: &str = "ST/LOC/";
+pub const REMOTE_STATE_TOPIC: &str = "ST/REM/";
+pub const REMOTE_ARCHIVE_STATE_TOPIC: &str = "ST/RAR/";
+pub const ANY_STATE_TOPIC: &str = "ST/+/";
+pub const REPLICATION_STATE_TOPIC: &str = "RPL/ST/";
+pub const REPLICATION_INVENTORY_TOPIC: &str = "RPL/INVENTORY/";
+pub const REPLICATION_NODE_STATE_TOPIC: &str = "RPL/NODE/";
+pub const LOG_INPUT_TOPIC: &str = "LOG/IN/";
+pub const LOG_EVENT_TOPIC: &str = "LOG/EV/";
+pub const SERVICE_STATUS_TOPIC: &str = "SVC/ST";
+pub const AAA_ACL_TOPIC: &str = "AAA/ACL/";
+pub const AAA_KEY_TOPIC: &str = "AAA/KEY/";
+pub const AAA_USER_TOPIC: &str = "AAA/USER/";
+
+#[derive(Debug, Copy, Clone)]
+#[repr(i8)]
+pub enum NodeStatus {
+    Online = 1,
+    Offline = 0,
+    Removed = -1,
+}
+
+impl NodeStatus {
+    fn as_str(&self) -> &str {
+        match self {
+            NodeStatus::Online => "online",
+            NodeStatus::Offline => "offline",
+            NodeStatus::Removed => "removed",
+        }
+    }
+}
+
+impl FromStr for NodeStatus {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "online" => Ok(NodeStatus::Online),
+            "offline" => Ok(NodeStatus::Offline),
+            "removed" => Ok(NodeStatus::Removed),
+            _ => Err(Error::invalid_data(format!("Invalid node status: {}", s))),
+        }
+    }
+}
+
+/// submitted to RPL/NODE/<name>
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NodeStateEvent {
+    pub status: NodeStatus,
+    #[serde(default)]
+    pub info: Option<NodeInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeInfo {
+    pub build: u64,
+    pub version: String,
+}
+
+impl Serialize for NodeStatus {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for NodeStatus {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<NodeStatus, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: String = Deserialize::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Submitted by services via the bus for local items
+#[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RawStateEvent<'a> {
+    pub status: ItemStatus,
+    #[serde(default, skip_serializing_if = "ValueOption::is_none")]
+    pub value: ValueOption<'a>,
+    #[serde(default)]
+    // used to forcibly set e.g. lvar state, even if its status is 0
+    pub force: bool,
+}
+
+impl<'a> RawStateEvent<'a> {
+    #[inline]
+    pub fn new(status: ItemStatus, value: &'a Value) -> Self {
+        Self {
+            status,
+            value: ValueOption::Value(value),
+            force: false,
+        }
+    }
+    #[inline]
+    pub fn new0(status: ItemStatus) -> Self {
+        Self {
+            status,
+            value: ValueOption::No,
+            force: false,
+        }
+    }
+    pub fn force(mut self) -> Self {
+        self.force = true;
+        self
+    }
+}
+
+/// Submitted by services via the bus for local items
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RawStateEventOwned {
+    pub status: ItemStatus,
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value: ValueOptionOwned,
+    #[serde(default)]
+    // used to forcibly set e.g. lvar state, even if its status is 0
+    pub force: bool,
+}
+
+impl RawStateEventOwned {
+    #[inline]
+    pub fn new(status: ItemStatus, value: Value) -> Self {
+        Self {
+            status,
+            value: ValueOptionOwned::Value(value),
+            force: false,
+        }
+    }
+    #[inline]
+    pub fn new0(status: ItemStatus) -> Self {
+        Self {
+            status,
+            value: ValueOptionOwned::No,
+            force: false,
+        }
+    }
+    pub fn force(mut self) -> Self {
+        self.force = true;
+        self
+    }
+}
+
+/// Submitted by the core via the bus for procesed local events
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LocalStateEvent {
+    pub status: ItemStatus,
+    pub value: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: IEID,
+    pub t: f64,
+}
+
+/// Submitted by the core via the bus for processed remote events
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteStateEvent {
+    pub status: ItemStatus,
+    pub value: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: IEID,
+    pub t: f64,
+    pub node: String,
+    pub connected: bool,
+}
+
+impl RemoteStateEvent {
+    pub fn from_local_state_event(
+        event: LocalStateEvent,
+        system_name: &str,
+        connected: bool,
+    ) -> Self {
+        Self {
+            status: event.status,
+            value: event.value,
+            act: event.act,
+            ieid: event.ieid,
+            t: event.t,
+            node: system_name.to_owned(),
+            connected,
+        }
+    }
+}
+
+/// Stored by the core
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DbState {
+    pub status: ItemStatus,
+    pub value: Value,
+    pub ieid: IEID,
+    pub t: f64,
+}
+
+/// Processed by the core and some additional services
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReplicationState {
+    pub status: ItemStatus,
+    pub value: Value,
+    pub act: Option<usize>,
+    pub ieid: IEID,
+    pub t: f64,
+}
+
+/// Submitted by replication services for remote items
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReplicationStateEvent {
+    pub status: ItemStatus,
+    pub value: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: IEID,
+    pub t: f64,
+    pub node: String,
+}
+
+impl From<ReplicationStateEvent> for ReplicationState {
+    fn from(d: ReplicationStateEvent) -> Self {
+        Self {
+            status: d.status,
+            value: d.value,
+            act: d.act,
+            ieid: d.ieid,
+            t: d.t,
+        }
+    }
+}
+
+impl TryFrom<ReplicationInventoryItem> for ReplicationState {
+    type Error = Error;
+    fn try_from(item: ReplicationInventoryItem) -> Result<Self, Self::Error> {
+        let v: Option<Value> = item.value.into();
+        Ok(Self {
+            status: item.status.unwrap_or_default(),
+            value: v.unwrap_or_default(),
+            act: item.act,
+            ieid: item
+                .ieid
+                .ok_or_else(|| Error::invalid_data(format!("IEID missing ({})", item.oid)))?,
+            t: item
+                .t
+                .ok_or_else(|| Error::invalid_data(format!("Set time missing ({})", item.oid)))?,
+        })
+    }
+}
+
+#[allow(clippy::similar_names)]
+impl ReplicationStateEvent {
+    #[inline]
+    pub fn new(
+        status: ItemStatus,
+        value: Value,
+        act: Option<usize>,
+        ieid: IEID,
+        t: f64,
+        node: &str,
+    ) -> Self {
+        Self {
+            status,
+            value,
+            act,
+            ieid,
+            t,
+            node: node.to_owned(),
+        }
+    }
+}
+
+impl From<ReplicationStateEvent> for RemoteStateEvent {
+    fn from(d: ReplicationStateEvent) -> Self {
+        Self {
+            status: d.status,
+            value: d.value,
+            act: d.act,
+            ieid: d.ieid,
+            t: d.t,
+            node: d.node,
+            connected: true,
+        }
+    }
+}
+
+/// Submitted by replication services to RPL/INVENTORY/<name> (as a list of)
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct ReplicationInventoryItem {
+    pub oid: OID,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<ItemStatus>,
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value: ValueOptionOwned,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: Option<IEID>,
+    pub t: Option<f64>,
+    pub meta: Option<Value>,
+    pub enabled: bool,
+}
+
+impl Hash for ReplicationInventoryItem {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.oid.hash(state);
+    }
+}
+
+impl Eq for ReplicationInventoryItem {}
+
+impl PartialEq for ReplicationInventoryItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.oid == other.oid
+    }
+}
+
+/// full state with info, returned by item.state RPC functions, used in HMI and other apps
+#[derive(Debug, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct FullItemStateAndInfo<'a> {
+    #[serde(flatten)]
+    pub si: ItemStateAndInfo<'a>,
+    // full
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meta: Option<&'a Value>,
+    pub enabled: bool,
+}
+
+/// short state with info, returned by item.state RPC functions, used in HMI and other apps
+#[derive(Debug, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct ItemStateAndInfo<'a> {
+    pub oid: &'a OID,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<ItemStatus>,
+    // the value is always owned as states are usually hold under mutexes
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value: ValueOptionOwned,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: Option<IEID>,
+    pub t: Option<f64>,
+    pub node: &'a str,
+    pub connected: bool,
+}
+
+/// full state with info, returned by item.state RPC functions, used in HMI and other apps
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct FullItemStateAndInfoOwned {
+    #[serde(flatten)]
+    pub si: ItemStateAndInfoOwned,
+    // full
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meta: Option<Value>,
+    pub enabled: bool,
+}
+
+/// short state with info, returned by item.state RPC functions, used in HMI and other apps
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct ItemStateAndInfoOwned {
+    pub oid: OID,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<ItemStatus>,
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value: ValueOptionOwned,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub act: Option<usize>,
+    pub ieid: Option<IEID>,
+    pub t: Option<f64>,
+    pub node: String,
+    pub connected: bool,
+}
+
+impl From<FullItemStateAndInfoOwned> for ReplicationInventoryItem {
+    fn from(s: FullItemStateAndInfoOwned) -> ReplicationInventoryItem {
+        ReplicationInventoryItem {
+            oid: s.si.oid,
+            status: s.si.status,
+            value: s.si.value,
+            act: s.si.act,
+            ieid: s.si.ieid,
+            t: s.si.t,
+            meta: s.meta,
+            enabled: s.enabled,
+        }
+    }
+}
