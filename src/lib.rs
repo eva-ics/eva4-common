@@ -299,6 +299,8 @@ impl_err_error!(hex::FromHexError, Error::invalid_data);
 impl_err_error!(regex::Error, Error::invalid_data);
 #[cfg(any(feature = "actions", feature = "dataconv"))]
 impl_err_error!(uuid::Error, Error::invalid_data);
+#[cfg(feature = "services")]
+impl_err_error!(openssl::error::ErrorStack, Error::core);
 
 #[cfg(feature = "bus-rpc")]
 impl From<busrt::rpc::RpcError> for Error {

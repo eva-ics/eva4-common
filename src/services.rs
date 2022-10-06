@@ -101,6 +101,8 @@ pub struct Initial {
         deserialize_with = "crate::tools::deserialize_atomic_bool"
     )]
     fail_mode: atomic::AtomicBool,
+    #[serde(default)]
+    fips: bool,
 }
 
 impl Initial {
@@ -118,6 +120,7 @@ impl Initial {
         workers: u32,
         user: Option<&str>,
         react_to_fail: bool,
+        fips: bool,
     ) -> Self {
         Self {
             config_version: SERVICE_CONFIG_VERSION,
@@ -134,7 +137,15 @@ impl Initial {
             user: user.map(ToOwned::to_owned),
             react_to_fail,
             fail_mode: atomic::AtomicBool::new(false),
+            fips,
         }
+    }
+    #[inline]
+    pub fn init(&self) -> EResult<()> {
+        if self.fips {
+            openssl::fips::enable(true)?;
+        }
+        Ok(())
     }
     #[inline]
     pub fn config_version(&self) -> u16 {

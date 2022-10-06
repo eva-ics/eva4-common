@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.1.178"
+version = "0.1.179"
 edition = "2021"
 authors = ["Sergei S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -44,24 +44,25 @@ sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls" , "sqlite" ], 
 hyper = { version = "0.14.18", optional = true }
 serde_yaml = { version = "0.8.26", optional = true }
 rand = { version = "0.8.5", optional = true }
-hyper-static = { version = "0.1.3", optional = true }
+hyper-static = { version = "0.1.5", optional = true }
 submap = { version = "0.2.3", optional = true }
 once_cell = { version = "1.13.1", optional = true }
 dateparser = { version = "0.1.7", optional = true }
+openssl = { version = "0.10.42", optional = true }
 
 [features]
 nostd = []
 #ext = ["payload", "log", "libloading", "lazy_static"]
 acl = ["submap"] # access control lists
 events = [] # common events
-services = ["bus-rpc", "tokio", "registry", "nix"] # service structures and tools
+services = ["bus-rpc", "tokio", "registry", "nix", "openssl"] # service structures and tools
 actions = ["uuid"] # action structures and tools
 registry = ["busrt", "payload"]
 logger = ["async-channel", "lazy_static", "busrt", "tokio", "once_cell"]
 extended-value = ["bmart", "async-recursion", "serde_yaml", "tokio"]
 time = ["nix", "dateparser"] # timestamp helpers
 db = ["yedb", "sqlx"] # db bindings
-openssl-vendored = ["yedb/openssl-vendored"]
+openssl-vendored = ["openssl/vendored"]
 bus-rpc = ["busrt", "payload"] # bus/rt bindings
 workers = ["bmart", "lazy_static", "tokio"] # misc workers
 dataconv = ["hex", "regex", "uuid"] # data conversion bindings

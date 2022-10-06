@@ -173,15 +173,6 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "block-buffer"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
-dependencies = [
- "generic-array",
-]
-
-[[package]]
-name = "block-buffer"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bf7fe51849ea569fd452f37822f606a5cabb684dc918707a0193fd4664ff324"
@@ -464,20 +455,11 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3dd60d1080a57a05ab032377049e0591415d2b31afd7028356dbf3cc6dcb066"
-dependencies = [
- "generic-array",
-]
-
-[[package]]
-name = "digest"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
 dependencies = [
- "block-buffer 0.10.2",
+ "block-buffer",
  "crypto-common",
 ]
 
@@ -504,7 +486,7 @@ dependencies = [
 
 [[package]]
 name = "eva-common"
-version = "0.1.178"
+version = "0.1.179"
 dependencies = [
  "async-channel",
  "async-recursion",
@@ -520,6 +502,7 @@ dependencies = [
  "log",
  "nix 0.25.0",
  "once_cell",
+ "openssl",
  "ordered-float",
  "rand",
  "regex",
@@ -914,9 +897,9 @@ dependencies = [
 
 [[package]]
 name = "hyper-static"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54e7e473b9f543f5a77516ce3a6657cc46113cc9222aed8abe37be76f33cfaa9"
+checksum = "06a979f21eb2a7303f586e8461a40606bc2ff8eaa05954e6849bfe4a89e9d376"
 dependencies = [
  "async-stream",
  "bmart-derive",
@@ -925,7 +908,7 @@ dependencies = [
  "futures",
  "hex",
  "hyper",
- "sha2 0.10.2",
+ "openssl",
  "tokio",
 ]
 
@@ -1319,12 +1302,6 @@ name = "once_cell"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "074864da206b4973b84eb91683020dbefd6a8c3f0f38e054d93954e891935e4e"
-
-[[package]]
-name = "opaque-debug"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "openssl"
@@ -1901,26 +1878,13 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.9.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d58a1e1bf39749807d89cf2d98ac2dfa0ff1cb3faa38fbb64dd88ac8013d800"
-dependencies = [
- "block-buffer 0.9.0",
- "cfg-if",
- "cpufeatures",
- "digest 0.9.0",
- "opaque-debug",
-]
-
-[[package]]
-name = "sha2"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55deaec60f81eefe3cce0dc50bda92d6d8e88f2a27df7c5033b42afeb1ed2676"
 dependencies = [
  "cfg-if",
  "cpufeatures",
- "digest 0.10.3",
+ "digest",
 ]
 
 [[package]]
@@ -2022,7 +1986,7 @@ dependencies = [
  "once_cell",
  "paste",
  "percent-encoding",
- "sha2 0.10.2",
+ "sha2",
  "smallvec",
  "sqlformat",
  "sqlx-rt",
@@ -2044,7 +2008,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "sha2 0.10.2",
+ "sha2",
  "sqlx-core",
  "sqlx-rt",
  "syn",
@@ -2105,9 +2069,9 @@ dependencies = [
 
 [[package]]
 name = "submap"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e12a33e5b7d9e3e349c051614fe462f37363885d1eb5b57f2cb63857322af4d"
+checksum = "533f267daf58a43bad1c92957b7ae91e5b64adb560243adc2ee24bf460e965c9"
 
 [[package]]
 name = "syn"
@@ -2627,9 +2591,9 @@ dependencies = [
 
 [[package]]
 name = "yedb"
-version = "0.4.9"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38442fb04b5e08350d1e365e1ac4cdd13ed5d2038a416e610bc966c187b36fbc"
+checksum = "a129d121bd08d86941118c2dc7b27ff2174afd9142932ded3701dc3050f397a4"
 dependencies = [
  "fs2",
  "fs_extra",
@@ -2648,5 +2612,4 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_yaml",
- "sha2 0.9.9",
 ]
