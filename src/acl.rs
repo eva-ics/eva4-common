@@ -632,7 +632,7 @@ impl Acl {
     pub fn id(&self) -> &str {
         &self.id
     }
-    pub fn get_items_allow_deny(&self) -> (Vec<String>, Vec<String>) {
+    pub fn get_items_allow_deny_reading(&self) -> (Vec<String>, Vec<String>) {
         if self.admin {
             (vec!["#".to_owned()], vec![])
         } else {
@@ -640,8 +640,8 @@ impl Acl {
             let allow_write: HashSet<String> =
                 self.write.items.as_string_vec().into_iter().collect();
             allow.extend(allow_write);
-            let deny: HashSet<String> = self.deny.items.as_string_vec().into_iter().collect();
-            (allow.into_iter().collect(), deny.into_iter().collect())
+            //let deny: HashSet<String> = self.deny.items.as_string_vec().into_iter().collect();
+            (allow.into_iter().collect(), Vec::new())
         }
     }
     #[inline]
@@ -654,9 +654,7 @@ impl Acl {
     }
     #[inline]
     pub fn check_item_read(&self, oid: &OID) -> bool {
-        self.admin
-            || ((self.read.items.matches(oid) || self.write.items.matches(oid))
-                && !self.deny.items.matches(oid))
+        self.admin || (self.read.items.matches(oid) || self.write.items.matches(oid))
     }
     #[inline]
     pub fn check_item_write(&self, oid: &OID) -> bool {
