@@ -114,4 +114,17 @@ impl TtlCache {
             Ok(None)
         }
     }
+    pub async fn delete(&self, key: &str) -> EResult<()> {
+        trace!("deleting {} key {}", self.path, key);
+        sqlx::query("DELETE FROM kv WHERE k = ?")
+            .bind(key)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+    pub async fn purge(&self) -> EResult<()> {
+        trace!("deleting all keys in {}", self.path);
+        sqlx::query("DELETE FROM kv").execute(&self.pool).await?;
+        Ok(())
+    }
 }
