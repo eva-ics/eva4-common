@@ -21,6 +21,16 @@ pub const LOG_LEVEL_INFO: u8 = 20;
 pub const LOG_LEVEL_WARN: u8 = 30;
 pub const LOG_LEVEL_ERROR: u8 = 40;
 
+pub fn log_level_code(level: log::Level) -> u8 {
+    match level {
+        log::Level::Trace => LOG_LEVEL_TRACE,
+        log::Level::Debug => LOG_LEVEL_DEBUG,
+        log::Level::Info => LOG_LEVEL_INFO,
+        log::Level::Warn => LOG_LEVEL_WARN,
+        log::Level::Error => LOG_LEVEL_ERROR,
+    }
+}
+
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub mod op;

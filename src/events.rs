@@ -15,6 +15,7 @@ pub const REPLICATION_INVENTORY_TOPIC: &str = "RPL/INVENTORY/";
 pub const REPLICATION_NODE_STATE_TOPIC: &str = "RPL/NODE/";
 pub const LOG_INPUT_TOPIC: &str = "LOG/IN/";
 pub const LOG_EVENT_TOPIC: &str = "LOG/EV/";
+pub const LOG_CALL_TRACE_TOPIC: &str = "LOG/TR/";
 pub const SERVICE_STATUS_TOPIC: &str = "SVC/ST";
 pub const AAA_ACL_TOPIC: &str = "AAA/ACL/";
 pub const AAA_KEY_TOPIC: &str = "AAA/KEY/";

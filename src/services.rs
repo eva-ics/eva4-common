@@ -103,6 +103,8 @@ pub struct Initial {
     fail_mode: atomic::AtomicBool,
     #[serde(default)]
     fips: bool,
+    #[serde(default)]
+    call_tracing: bool,
 }
 
 impl Initial {
@@ -121,6 +123,7 @@ impl Initial {
         user: Option<&str>,
         react_to_fail: bool,
         fips: bool,
+        call_tracing: bool,
     ) -> Self {
         Self {
             config_version: SERVICE_CONFIG_VERSION,
@@ -138,6 +141,7 @@ impl Initial {
             react_to_fail,
             fail_mode: atomic::AtomicBool::new(false),
             fips,
+            call_tracing,
         }
     }
     #[inline]
@@ -231,6 +235,10 @@ impl Initial {
     #[inline]
     pub fn core_active(&self) -> bool {
         self.core.active
+    }
+    #[inline]
+    pub fn call_tracing(&self) -> bool {
+        self.call_tracing
     }
     #[inline]
     pub fn eva_log_level_filter(&self) -> log::LevelFilter {

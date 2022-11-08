@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.1.181"
+version = "0.1.182"
 edition = "2021"
 authors = ["Sergei S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -58,7 +58,7 @@ events = [] # common events
 services = ["bus-rpc", "tokio", "registry", "nix", "openssl"] # service structures and tools
 actions = ["uuid"] # action structures and tools
 registry = ["busrt", "payload"]
-logger = ["async-channel", "lazy_static", "busrt", "tokio", "once_cell"]
+logger = ["async-channel", "lazy_static", "busrt", "tokio", "once_cell", "payload", "uuid"]
 extended-value = ["bmart", "async-recursion", "serde_yaml", "tokio"]
 time = ["nix", "dateparser"] # timestamp helpers
 db = ["yedb", "sqlx"] # db bindings
