@@ -78,6 +78,10 @@ impl NodeData {
     pub fn update_info(&mut self, info: NodeInfo) {
         self.info.replace(info);
     }
+    #[inline]
+    pub fn update_timeout(&mut self, timeout: Option<Duration>) {
+        self.timeout = timeout;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
