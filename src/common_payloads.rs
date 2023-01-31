@@ -6,6 +6,7 @@ use rand::thread_rng;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::sync::atomic;
 use std::sync::Arc;
+use std::time::Duration;
 use uuid::Uuid;
 
 pub fn deserialize_uuid<'de, D>(deserializer: D) -> Result<Uuid, D::Error>
@@ -26,15 +27,27 @@ pub struct NodeData {
     online: Arc<atomic::AtomicBool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     info: Option<NodeInfo>,
+    #[serde(
+        default,
+        serialize_with = "crate::tools::serialize_opt_duration_as_f64",
+        deserialize_with = "crate::tools::de_opt_float_as_duration"
+    )]
+    timeout: Option<Duration>,
 }
 
 impl NodeData {
     #[inline]
-    pub fn new(svc: Option<&str>, online: bool, info: Option<NodeInfo>) -> Self {
+    pub fn new(
+        svc: Option<&str>,
+        online: bool,
+        info: Option<NodeInfo>,
+        timeout: Option<Duration>,
+    ) -> Self {
         Self {
             svc: svc.map(ToOwned::to_owned),
             online: Arc::new(atomic::AtomicBool::new(online)),
             info,
+            timeout,
         }
     }
     #[inline]
@@ -52,6 +65,10 @@ impl NodeData {
     #[inline]
     pub fn info(&self) -> Option<&NodeInfo> {
         self.info.as_ref()
+    }
+    #[inline]
+    pub fn timeout(&self) -> Option<Duration> {
+        self.timeout
     }
     #[inline]
     pub fn set_online(&self, online: bool) {
