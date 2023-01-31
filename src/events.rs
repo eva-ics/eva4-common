@@ -4,6 +4,7 @@ use crate::{ItemStatus, IEID, OID};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
+use std::time::Duration;
 
 pub const RAW_STATE_TOPIC: &str = "RAW/";
 pub const LOCAL_STATE_TOPIC: &str = "ST/LOC/";
@@ -58,6 +59,12 @@ pub struct NodeStateEvent {
     pub status: NodeStatus,
     #[serde(default)]
     pub info: Option<NodeInfo>,
+    #[serde(
+        default,
+        serialize_with = "crate::tools::serialize_opt_duration_as_f64",
+        deserialize_with = "crate::tools::de_opt_float_as_duration"
+    )]
+    pub timeout: Option<Duration>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
