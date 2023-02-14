@@ -398,14 +398,12 @@ where
         let (variant, value) = match self.value {
             Value::Map(value) => {
                 let mut iter = value.into_iter();
-                let (variant, value) = match iter.next() {
-                    Some(v) => v,
-                    None => {
+                let Some((variant, value)) = iter.next() else
+                    {
                         return Err(de::Error::invalid_value(
                             de::Unexpected::Map,
                             &"map with a single key",
                         ));
-                    }
                 };
                 // enums are encoded as maps with a single key:value pair
                 if iter.next().is_some() {
