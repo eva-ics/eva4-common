@@ -571,6 +571,7 @@ impl TryFrom<Value> for OIDMaskList {
 #[serde(rename_all = "lowercase")]
 pub enum Op {
     Log,
+    Moderator,
     Supervisor,
 }
 
@@ -581,6 +582,7 @@ impl fmt::Display for Op {
             "{}",
             match self {
                 Op::Log => "log",
+                Op::Moderator => "moderator",
                 Op::Supervisor => "supervisor",
             }
         )
