@@ -621,7 +621,9 @@ pub struct Acl {
     #[serde(default)]
     write: AclItems,
     #[serde(default)]
-    deny: AclItemsPvt,
+    deny_read: AclItemsPvt,
+    #[serde(default, alias = "deny")]
+    deny_write: AclItemsPvt,
     #[serde(default)]
     ops: HashSet<Op>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -656,15 +658,17 @@ impl Acl {
     }
     #[inline]
     pub fn check_item_read(&self, oid: &OID) -> bool {
-        self.admin || (self.read.items.matches(oid) || self.write.items.matches(oid))
+        self.admin
+            || ((self.read.items.matches(oid) || self.write.items.matches(oid))
+                && !self.deny_read.items.matches(oid))
     }
     #[inline]
     pub fn check_item_write(&self, oid: &OID) -> bool {
-        self.admin || (self.write.items.matches(oid) && !self.deny.items.matches(oid))
+        self.admin || (self.write.items.matches(oid) && !self.deny_write.items.matches(oid))
     }
     #[inline]
     pub fn check_pvt_read(&self, path: &str) -> bool {
-        self.admin || (self.read.pvt.matches(path) && !self.deny.pvt.matches(path))
+        self.admin || (self.read.pvt.matches(path) && !self.deny_read.pvt.matches(path))
     }
     #[inline]
     pub fn check_rpvt_read(&self, path: &str) -> bool {
@@ -683,7 +687,7 @@ impl Acl {
                     };
                     let stripped_path = format!("{node}/{stripped_uri}");
                     self.read.rpvt.matches(&stripped_path)
-                        && !self.deny.rpvt.matches(&stripped_path)
+                        && !self.deny_read.rpvt.matches(&stripped_path)
                 } else {
                     false
                 }
@@ -928,7 +932,7 @@ mod tests {
         )
         .unwrap();
         acl.read.rpvt = p_allow;
-        acl.deny.rpvt = p_deny;
+        acl.deny_read.rpvt = p_deny;
         for pfx in &["", "http://", "https://"] {
             assert_eq!(acl.check_rpvt_read(&format!("node1/{pfx}res")), true);
             assert_eq!(acl.check_rpvt_read(&format!("node2/{pfx}res")), false);
