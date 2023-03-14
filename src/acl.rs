@@ -664,7 +664,10 @@ impl Acl {
     }
     #[inline]
     pub fn check_item_write(&self, oid: &OID) -> bool {
-        self.admin || (self.write.items.matches(oid) && !self.deny_write.items.matches(oid))
+        self.admin
+            || (self.write.items.matches(oid)
+                && !self.deny_write.items.matches(oid)
+                && !self.deny_read.items.matches(oid))
     }
     #[inline]
     pub fn check_pvt_read(&self, path: &str) -> bool {
