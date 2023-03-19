@@ -269,7 +269,7 @@ impl Initial {
     pub fn bus_config_for_sub(&self, sub_id: &str) -> EResult<busrt::ipc::Config> {
         if self.bus.tp == "native" {
             Ok(
-                busrt::ipc::Config::new(&self.bus.path, &format!("{}::{}", self.id, custom_id))
+                busrt::ipc::Config::new(&self.bus.path, &format!("{}::{}", self.id, sub_id))
                     .buf_size(self.bus.buf_size)
                     .buf_ttl(Duration::from_micros(self.bus.buf_ttl))
                     .queue_size(self.bus.queue_size)
