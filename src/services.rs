@@ -266,6 +266,23 @@ impl Initial {
         }
     }
     #[inline]
+    pub fn bus_config_for_sub(&self, sub_id: &str) -> EResult<busrt::ipc::Config> {
+        if self.bus.tp == "native" {
+            Ok(
+                busrt::ipc::Config::new(&self.bus.path, &format!("{}::{}", self.id, custom_id))
+                    .buf_size(self.bus.buf_size)
+                    .buf_ttl(Duration::from_micros(self.bus.buf_ttl))
+                    .queue_size(self.bus.queue_size)
+                    .timeout(self.bus_timeout()),
+            )
+        } else {
+            Err(Error::not_implemented(format!(
+                "bus type {} is not supported",
+                self.bus.tp
+            )))
+        }
+    }
+    #[inline]
     pub fn bus_path(&self) -> &str {
         &self.bus.path
     }
@@ -344,6 +361,14 @@ impl Initial {
         let bus = tokio::time::timeout(
             self.bus_timeout(),
             busrt::ipc::Client::connect(&self.bus_config()?),
+        )
+        .await??;
+        Ok(bus)
+    }
+    pub async fn init_bus_client_sub(&self, sub_id: &str) -> EResult<busrt::ipc::Client> {
+        let bus = tokio::time::timeout(
+            self.bus_timeout(),
+            busrt::ipc::Client::connect(&self.bus_config_for_sub(sub_id)?),
         )
         .await??;
         Ok(bus)
