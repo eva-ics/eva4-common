@@ -40,17 +40,12 @@ impl From<ser::SerializerError> for Error {
 const ERR_INVALID_VALUE: &str = "Invalid value";
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Serialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Clone, Eq, PartialEq, Default)]
 #[serde(untagged)]
 pub enum ValueOptionOwned {
+    #[default]
     No,
     Value(Value),
-}
-
-impl Default for ValueOptionOwned {
-    fn default() -> Self {
-        ValueOptionOwned::No
-    }
 }
 
 impl ValueOptionOwned {
@@ -90,17 +85,12 @@ impl From<Option<Value>> for ValueOptionOwned {
 }
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Serialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Clone, Eq, PartialEq, Default)]
 #[serde(untagged)]
 pub enum ValueOption<'a> {
+    #[default]
     No,
     Value(&'a Value),
-}
-
-impl<'a> Default for ValueOption<'a> {
-    fn default() -> Self {
-        ValueOption::No
-    }
 }
 
 impl<'a> ValueOption<'a> {
@@ -141,7 +131,7 @@ fn parse_time_frame(s: &str) -> Option<f64> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum Value {
     Bool(bool),
 
@@ -161,18 +151,13 @@ pub enum Value {
     Char(char),
     String(String),
 
+    #[default]
     Unit,
     Option(Option<Box<Value>>),
     Newtype(Box<Value>),
     Seq(Vec<Value>),
     Map(BTreeMap<Value, Value>),
     Bytes(Vec<u8>),
-}
-
-impl Default for Value {
-    fn default() -> Self {
-        Value::Unit
-    }
 }
 
 impl fmt::Display for Value {
