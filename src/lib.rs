@@ -5,6 +5,8 @@
 extern crate lazy_static;
 
 use crate::value::{to_value, Value};
+#[cfg(feature = "axum")]
+use axum::http::StatusCode;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::Ordering;
@@ -549,6 +551,28 @@ impl std::fmt::Display for Error {
         } else {
             write!(f, "{}", self.kind)
         }
+    }
+}
+
+#[cfg(feature = "axum")]
+impl From<Error> for (StatusCode, String) {
+    fn from(e: Error) -> Self {
+        let code = match e.kind() {
+            ErrorKind::NotReady => StatusCode::SERVICE_UNAVAILABLE,
+            ErrorKind::ResourceNotFound => StatusCode::NOT_FOUND,
+            ErrorKind::ResourceBusy => StatusCode::LOCKED,
+            ErrorKind::ResourceAlreadyExists => StatusCode::CONFLICT,
+            ErrorKind::AccessDenied
+            | ErrorKind::AccessDeniedMoreDataRequired
+            | ErrorKind::EvaHIAuthenticationRequired
+            | ErrorKind::TokenRestricted => StatusCode::FORBIDDEN,
+            ErrorKind::MethodNotFound
+            | ErrorKind::MethodNotImplemented
+            | ErrorKind::InvalidParameter => StatusCode::BAD_REQUEST,
+            ErrorKind::Timeout => StatusCode::REQUEST_TIMEOUT,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        (code, e.message.unwrap_or_default())
     }
 }
 
