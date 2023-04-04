@@ -41,6 +41,11 @@ impl Serialize for Time {
 }
 
 impl Time {
+    #[inline]
+    #[allow(clippy::similar_names)]
+    pub fn new(sec: u64, nsec: u64) -> Self {
+        Self { sec, nsec }
+    }
     /// # Panics
     ///
     /// Will panic if the system clock is not available
