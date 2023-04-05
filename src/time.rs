@@ -83,6 +83,14 @@ impl Time {
     pub fn timestamp_ns(&self) -> u64 {
         self.sec * 1_000_000_000 + self.nsec
     }
+    #[inline]
+    pub fn timestamp_us(&self) -> u64 {
+        self.sec * 1_000_000 + self.nsec / 1_000
+    }
+    #[inline]
+    pub fn timestamp_ms(&self) -> u64 {
+        self.sec * 1_000 + self.nsec / 1_000_000
+    }
 }
 
 impl From<Time> for Value {
@@ -185,5 +193,7 @@ mod tests {
         let time = Time::from_timestamp_ns(timestamp_ns);
         assert_eq!(time.timestamp_ns(), timestamp_ns);
         assert_eq!(time.timestamp(), 1632093707.123456789);
+        assert_eq!(time.timestamp_ms(), timestamp_ns / 1_000_000);
+        assert_eq!(time.timestamp_us(), timestamp_ns / 1_000);
     }
 }
