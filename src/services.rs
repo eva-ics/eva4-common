@@ -526,11 +526,6 @@ fn default_bus_queue_size() -> usize {
     busrt::DEFAULT_QUEUE_SIZE
 }
 
-#[inline]
-fn default_bus_ping_interval() -> f64 {
-    1.0
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BusConfig {
     #[serde(rename = "type", default = "default_bus_type")]
@@ -543,8 +538,9 @@ pub struct BusConfig {
     buf_ttl: u64, // microseconds
     #[serde(default = "default_bus_queue_size")]
     queue_size: usize,
-    #[serde(default = "default_bus_ping_interval")]
-    ping_interval: f64,
+    // deprecated field, as BUS/RT RPC uses timeout as a ping interval
+    #[serde(rename = "ping_interval", skip_serializing, default)]
+    _ping_interval: f64,
 }
 
 impl BusConfig {
