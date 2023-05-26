@@ -139,19 +139,28 @@ pub struct ParamsUuidAny {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
-pub enum ValueOrList<T> {
+pub enum ValueOrList<T>
+where
+    T: Send + Sync,
+{
     Single(T),
     Multiple(Vec<T>),
 }
 
-impl<T> Default for ValueOrList<T> {
+impl<T> Default for ValueOrList<T>
+where
+    T: Send + Sync,
+{
     #[inline]
     fn default() -> Self {
         ValueOrList::Multiple(Vec::new())
     }
 }
 
-impl<T> ValueOrList<T> {
+impl<T> ValueOrList<T>
+where
+    T: Send + Sync,
+{
     pub fn is_empty(&self) -> bool {
         match self {
             ValueOrList::Single(_) => false,
@@ -175,41 +184,36 @@ impl<T> ValueOrList<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a ValueOrList<T> {
-    type Item = &'a T;
-    type IntoIter = Box<dyn Iterator<Item = Self::Item> + 'a>;
+impl<T: Send + Sync + 'static> IntoIterator for ValueOrList<T> {
+    type Item = T;
+    type IntoIter = Box<dyn Iterator<Item = Self::Item> + Send + Sync + 'static>;
 
     fn into_iter(self) -> Self::IntoIter {
         match self {
-            ValueOrList::Single(s) => Box::new(SingleIter::new(s)),
+            ValueOrList::Single(s) => Box::new(SingleIter(Some(s))),
+            ValueOrList::Multiple(vals) => Box::new(vals.into_iter()),
+        }
+    }
+}
+
+impl<'a, T: Send + Sync> IntoIterator for &'a ValueOrList<T> {
+    type Item = &'a T;
+    type IntoIter = Box<dyn Iterator<Item = Self::Item> + Send + Sync + 'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            ValueOrList::Single(s) => Box::new(SingleIter(Some(s))),
             ValueOrList::Multiple(vals) => Box::new(vals.iter()),
         }
     }
 }
 
-struct SingleIter<'a, T> {
-    item: &'a T,
-    yeilded: bool,
-}
+struct SingleIter<T>(Option<T>);
 
-impl<'a, T> SingleIter<'a, T> {
+impl<T> Iterator for SingleIter<T> {
+    type Item = T;
     #[inline]
-    fn new(item: &'a T) -> Self {
-        Self {
-            item,
-            yeilded: false,
-        }
-    }
-}
-
-impl<'a, T> Iterator for SingleIter<'a, T> {
-    type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.yeilded {
-            None
-        } else {
-            self.yeilded = true;
-            Some(self.item)
-        }
+        self.0.take()
     }
 }
