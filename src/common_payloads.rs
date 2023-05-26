@@ -141,7 +141,7 @@ pub struct ParamsUuidAny {
 #[serde(untagged)]
 pub enum ValueOrList<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Clone,
 {
     Single(T),
     Multiple(Vec<T>),
@@ -149,7 +149,7 @@ where
 
 impl<T> Default for ValueOrList<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Clone,
 {
     #[inline]
     fn default() -> Self {
@@ -159,7 +159,7 @@ where
 
 impl<T> ValueOrList<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Clone,
 {
     pub fn is_empty(&self) -> bool {
         match self {
@@ -182,9 +182,21 @@ where
     pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.into_iter()
     }
+    pub fn to_vec(&self) -> Vec<T> {
+        match self {
+            ValueOrList::Single(v) => vec![v.clone()],
+            ValueOrList::Multiple(v) => v.clone(),
+        }
+    }
+    pub fn into_vec(self) -> Vec<T> {
+        match self {
+            ValueOrList::Single(v) => vec![v],
+            ValueOrList::Multiple(v) => v,
+        }
+    }
 }
 
-impl<T: Send + Sync + 'static> IntoIterator for ValueOrList<T> {
+impl<T: Send + Sync + Clone + 'static> IntoIterator for ValueOrList<T> {
     type Item = T;
     type IntoIter = Box<dyn Iterator<Item = Self::Item> + Send + Sync + 'static>;
 
@@ -196,7 +208,7 @@ impl<T: Send + Sync + 'static> IntoIterator for ValueOrList<T> {
     }
 }
 
-impl<'a, T: Send + Sync> IntoIterator for &'a ValueOrList<T> {
+impl<'a, T: Send + Sync + Clone> IntoIterator for &'a ValueOrList<T> {
     type Item = &'a T;
     type IntoIter = Box<dyn Iterator<Item = Self::Item> + Send + Sync + 'a>;
 
