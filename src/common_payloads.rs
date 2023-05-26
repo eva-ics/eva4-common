@@ -95,19 +95,9 @@ pub struct ParamsIdOwned {
     pub i: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(untagged)]
-pub enum IdOrList<'a> {
-    Single(&'a str),
-    Multi(Vec<&'a str>),
-}
+pub type IdOrList<'a> = ValueOrList<&'a str>;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(untagged)]
-pub enum IdOrListOwned {
-    Single(String),
-    Multi(Vec<String>),
-}
+pub type IdOrListOwned = ValueOrList<String>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ParamsIdOrList<'a> {
@@ -147,7 +137,7 @@ pub struct ParamsUuidAny {
     pub u: Uuid,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum ValueOrList<T> {
     Single(T),
@@ -168,38 +158,52 @@ impl<T> ValueOrList<T> {
             ValueOrList::Multiple(v) => v.is_empty(),
         }
     }
-    pub fn iter(&self) -> ValueOrListIter<T> {
-        ValueOrListIter {
-            path: self,
-            curr: 0,
-        }
-    }
     pub fn shuffle(&mut self) {
         if let ValueOrList::Multiple(ref mut v) = self {
             v.shuffle(&mut thread_rng());
         }
     }
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+        self.into_iter()
+    }
 }
 
-pub struct ValueOrListIter<'a, T> {
-    path: &'a ValueOrList<T>,
-    curr: usize,
+impl<'a, T> IntoIterator for &'a ValueOrList<T> {
+    type Item = &'a T;
+    type IntoIter = Box<dyn Iterator<Item = Self::Item> + 'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            ValueOrList::Single(s) => Box::new(SingleIter::new(s)),
+            ValueOrList::Multiple(vals) => Box::new(vals.iter()),
+        }
+    }
 }
 
-impl<'a, T> Iterator for ValueOrListIter<'a, T> {
+struct SingleIter<'a, T> {
+    item: &'a T,
+    yeilded: bool,
+}
+
+impl<'a, T> SingleIter<'a, T> {
+    #[inline]
+    fn new(item: &'a T) -> Self {
+        Self {
+            item,
+            yeilded: false,
+        }
+    }
+}
+
+impl<'a, T> Iterator for SingleIter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
-        let res = match self.path {
-            ValueOrList::Single(v) => {
-                if self.curr == 0 {
-                    Some(v)
-                } else {
-                    None
-                }
-            }
-            ValueOrList::Multiple(v) => v.get(self.curr),
-        };
-        self.curr += 1;
-        res
+        if self.yeilded {
+            None
+        } else {
+            self.yeilded = true;
+            Some(self.item)
+        }
     }
 }
