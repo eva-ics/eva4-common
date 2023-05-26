@@ -158,6 +158,12 @@ impl<T> ValueOrList<T> {
             ValueOrList::Multiple(v) => v.is_empty(),
         }
     }
+    pub fn len(&self) -> usize {
+        match self {
+            ValueOrList::Single(_) => 1,
+            ValueOrList::Multiple(v) => v.len(),
+        }
+    }
     pub fn shuffle(&mut self) {
         if let ValueOrList::Multiple(ref mut v) = self {
             v.shuffle(&mut thread_rng());
