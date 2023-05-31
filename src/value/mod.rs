@@ -712,6 +712,7 @@ impl TryFrom<Value> for u8 {
 
     fn try_from(value: Value) -> EResult<u8> {
         match value {
+            Value::Bool(v) => Ok(u8::from(v)),
             Value::U8(v) => Ok(v),
             Value::U16(v) => Ok(ngt!(v, u16, u8)),
             Value::U32(v) => Ok(ngt!(v, u32, u8)),
@@ -733,6 +734,7 @@ impl TryFrom<Value> for i8 {
 
     fn try_from(value: Value) -> EResult<i8> {
         match value {
+            Value::Bool(v) => Ok(i8::from(v)),
             Value::U8(v) => Ok(ngt!(v, u8, i8)),
             Value::U16(v) => Ok(ngt!(v, u16, i8)),
             Value::U32(v) => Ok(ngt!(v, u32, i8)),
@@ -754,6 +756,7 @@ impl TryFrom<Value> for u16 {
 
     fn try_from(value: Value) -> EResult<u16> {
         match value {
+            Value::Bool(v) => Ok(u16::from(v)),
             Value::U8(v) => Ok(u16::from(v)),
             Value::U16(v) => Ok(v),
             Value::U32(v) => Ok(ngt!(v, u32, u16)),
@@ -775,6 +778,7 @@ impl TryFrom<Value> for i16 {
 
     fn try_from(value: Value) -> EResult<i16> {
         match value {
+            Value::Bool(v) => Ok(i16::from(v)),
             Value::U8(v) => Ok(i16::from(v)),
             Value::U16(v) => Ok(ngt!(v, u16, i16)),
             Value::U32(v) => Ok(ngt!(v, u32, i16)),
@@ -796,6 +800,7 @@ impl TryFrom<Value> for u32 {
 
     fn try_from(value: Value) -> EResult<u32> {
         match value {
+            Value::Bool(v) => Ok(u32::from(v)),
             Value::U8(v) => Ok(u32::from(v)),
             Value::U16(v) => Ok(u32::from(v)),
             Value::U32(v) => Ok(v),
@@ -817,6 +822,7 @@ impl TryFrom<Value> for i32 {
 
     fn try_from(value: Value) -> EResult<i32> {
         match value {
+            Value::Bool(v) => Ok(i32::from(v)),
             Value::U8(v) => Ok(i32::from(v)),
             Value::U16(v) => Ok(i32::from(v)),
             Value::U32(v) => Ok(ngt!(v, u32, i32)),
@@ -839,6 +845,7 @@ impl TryFrom<&Value> for u64 {
 
     fn try_from(value: &Value) -> EResult<u64> {
         match value {
+            Value::Bool(v) => Ok(u64::from(*v)),
             Value::U8(v) => Ok(u64::from(*v)),
             Value::U16(v) => Ok(u64::from(*v)),
             Value::U32(v) => Ok(u64::from(*v)),
@@ -860,6 +867,7 @@ impl TryFrom<Value> for u64 {
 
     fn try_from(value: Value) -> EResult<u64> {
         match value {
+            Value::Bool(v) => Ok(u64::from(v)),
             Value::U8(v) => Ok(u64::from(v)),
             Value::U16(v) => Ok(u64::from(v)),
             Value::U32(v) => Ok(u64::from(v)),
@@ -881,6 +889,7 @@ impl TryFrom<&Value> for i64 {
 
     fn try_from(value: &Value) -> EResult<i64> {
         match value {
+            Value::Bool(v) => Ok(i64::from(*v)),
             Value::U8(v) => Ok(i64::from(*v)),
             Value::U16(v) => Ok(i64::from(*v)),
             Value::U32(v) => Ok(i64::from(*v)),
@@ -904,6 +913,7 @@ impl TryFrom<Value> for i64 {
 
     fn try_from(value: Value) -> EResult<i64> {
         match value {
+            Value::Bool(v) => Ok(i64::from(v)),
             Value::U8(v) => Ok(i64::from(v)),
             Value::U16(v) => Ok(i64::from(v)),
             Value::U32(v) => Ok(i64::from(v)),
@@ -927,6 +937,7 @@ impl TryFrom<Value> for f32 {
 
     fn try_from(value: Value) -> EResult<f32> {
         match value {
+            Value::Bool(v) => Ok(f32::from(v)),
             Value::F32(v) => Ok(v),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, f32)),
             Value::U8(v) => Ok(f32::from(v)),
@@ -948,6 +959,7 @@ impl TryFrom<&Value> for f64 {
 
     fn try_from(value: &Value) -> EResult<f64> {
         match value {
+            Value::Bool(v) => Ok(f64::from(*v)),
             Value::U8(v) => Ok(f64::from(*v)),
             Value::U16(v) => Ok(f64::from(*v)),
             Value::U32(v) => Ok(f64::from(*v)),
@@ -969,6 +981,7 @@ impl TryFrom<Value> for f64 {
 
     fn try_from(value: Value) -> EResult<f64> {
         match value {
+            Value::Bool(v) => Ok(f64::from(v)),
             Value::U8(v) => Ok(f64::from(v)),
             Value::U16(v) => Ok(f64::from(v)),
             Value::U32(v) => Ok(f64::from(v)),
