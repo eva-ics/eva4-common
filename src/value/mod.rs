@@ -23,7 +23,10 @@ pub use ser::*;
 //pub use de::DeserializerError;
 
 mod de;
+mod index;
 mod ser;
+
+pub use index::{Index, IndexSlice};
 
 impl From<de::DeserializerError> for Error {
     fn from(err: de::DeserializerError) -> Error {
@@ -294,10 +297,25 @@ fn strip_bytes_rec(value: Value) -> Value {
 }
 
 impl Value {
+    #[inline]
+    pub fn get_by_index(&self, idx: &Index) -> Option<&Value> {
+        self.get_by_index_slice(idx.as_slice())
+    }
+    fn get_by_index_slice(&self, idx: IndexSlice<'_>) -> Option<&Value> {
+        if idx.0.is_empty() {
+            return Some(self);
+        }
+        if let Value::Seq(ref s) = self {
+            if let Some(s) = s.get(idx.0[0]) {
+                return s.get_by_index_slice(IndexSlice(&idx.0[1..]));
+            }
+        }
+        None
+    }
+
     /// Rounds value to digits after comma, if the value is float
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
-
     pub fn rounded(self, precision: Option<u32>) -> EResult<Value> {
         if let Some(precs) = precision {
             if let Value::F64(vf) = self {
