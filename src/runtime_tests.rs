@@ -1,15 +1,20 @@
 #[allow(unused_imports)]
 use crate::{EResult, Error};
+use serde::Deserialize;
 
 #[cfg(not(feature = "skip_self_test_serde"))]
 #[allow(clippy::unreadable_literal)]
 fn test_serde() -> EResult<()> {
+    #[derive(Deserialize)]
+    struct Test {
+        number: crate::value::Value,
+    }
     for json_val in [
-        serde_json::json!({"int":1234567890}),
-        serde_json::json!({"float":1234567890.123}),
+        serde_json::json!({"number":1234567890}),
+        serde_json::json!({"number":1234567890.123}),
     ] {
-        let val: crate::value::Value = crate::value::to_value(json_val).unwrap();
-        if let crate::value::Value::Map(_) = val {
+        let val: Test = Test::deserialize(crate::value::to_value(json_val).unwrap()).unwrap();
+        if let crate::value::Value::Map(_) = val.number {
             return Err(Error::core("serde_json arbitrary_precision MUST be off"));
         }
     }
