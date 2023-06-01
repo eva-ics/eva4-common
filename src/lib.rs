@@ -37,6 +37,10 @@ pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub mod op;
 pub mod tools;
+mod runtime_tests;
+
+#[allow(unused_imports)]
+pub use runtime_tests::self_test;
 
 #[cfg(feature = "acl")]
 pub mod acl;
