@@ -36,8 +36,8 @@ pub fn log_level_code(level: log::Level) -> u8 {
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub mod op;
-pub mod tools;
 mod runtime_tests;
+pub mod tools;
 
 #[allow(unused_imports)]
 pub use runtime_tests::self_test;

@@ -309,6 +309,8 @@ impl Value {
             if let Some(s) = s.get(idx.0[0]) {
                 return s.get_by_index_slice(IndexSlice(&idx.0[1..]));
             }
+        } else if idx.0.len() == 1 && idx.0[0] == 0 {
+            return Some(self);
         }
         None
     }
