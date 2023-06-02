@@ -308,7 +308,7 @@ fn flat_seq_value_rec(v: Value, result: &mut Vec<Value>) {
 
 impl Value {
     pub fn into_seq_flatten(self) -> Value {
-        let result = if let Value::Seq(_) = self {
+        let result = if self.is_seq() {
             let mut result = Vec::new();
             flat_seq_value_rec(self, &mut result);
             result
@@ -575,7 +575,12 @@ impl Value {
             _ => false,
         }
     }
-
+    pub fn is_seq(&self) -> bool {
+        matches!(self, Value::Seq(_))
+    }
+    pub fn is_map(&self) -> bool {
+        matches!(self, Value::Map(_))
+    }
     #[cfg(feature = "extended-value")]
     pub async fn extend(self, timeout: Duration, base: &Path) -> EResult<Value> {
         let op = crate::op::Op::new(timeout);
