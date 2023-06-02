@@ -366,6 +366,46 @@ impl OIDMask {
             Err(Error::invalid_data(ERR_INVALID_OID_MASK_OP))
         }
     }
+    fn parse_oid_mask(s: &str, c: char) -> EResult<Self> {
+        if is_str_wildcard(s) {
+            Ok(Self::new_any())
+        } else {
+            s.find(c).map_or_else(
+                || {
+                    let kind: ItemKind = s.parse()?;
+                    Ok(OIDMask {
+                        kind: Some(kind),
+                        path: PathMask::new_any(),
+                    })
+                },
+                |tpos| {
+                    if tpos == s.len() {
+                        Err(Error::invalid_data(format!(
+                            "{}: {}",
+                            ERR_INVALID_OID_MASK, s
+                        )))
+                    } else {
+                        let tp_str = &s[..tpos];
+                        let kind: Option<ItemKind> = if is_str_any(tp_str) {
+                            None
+                        } else {
+                            Some(s[..tpos].parse()?)
+                        };
+                        let p = &s[tpos + 1..];
+                        OIDMask::check(p)?;
+                        Ok(OIDMask {
+                            kind,
+                            path: p.parse()?,
+                        })
+                    }
+                },
+            )
+        }
+    }
+    #[inline]
+    pub fn from_path(s: &str) -> EResult<Self> {
+        Self::parse_oid_mask(s, '/')
+    }
     #[inline]
     pub fn as_path(&self) -> String {
         if self.path.chunks.is_some() {
@@ -463,40 +503,7 @@ impl From<OID> for OIDMaskList {
 impl FromStr for OIDMask {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if is_str_wildcard(s) {
-            Ok(Self::new_any())
-        } else {
-            s.find(':').map_or_else(
-                || {
-                    let kind: ItemKind = s.parse()?;
-                    Ok(OIDMask {
-                        kind: Some(kind),
-                        path: PathMask::new_any(),
-                    })
-                },
-                |tpos| {
-                    if tpos == s.len() {
-                        Err(Error::invalid_data(format!(
-                            "{}: {}",
-                            ERR_INVALID_OID_MASK, s
-                        )))
-                    } else {
-                        let tp_str = &s[..tpos];
-                        let kind: Option<ItemKind> = if is_str_any(tp_str) {
-                            None
-                        } else {
-                            Some(s[..tpos].parse()?)
-                        };
-                        let p = &s[tpos + 1..];
-                        OIDMask::check(p)?;
-                        Ok(OIDMask {
-                            kind,
-                            path: p.parse()?,
-                        })
-                    }
-                },
-            )
-        }
+        Self::parse_oid_mask(s, ':')
     }
 }
 
