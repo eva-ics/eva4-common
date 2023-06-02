@@ -296,7 +296,56 @@ fn strip_bytes_rec(value: Value) -> Value {
     }
 }
 
+fn flat_seq_value_rec(v: Value, result: &mut Vec<Value>) {
+    if let Value::Seq(s) = v {
+        for val in s {
+            flat_seq_value_rec(val, result);
+        }
+    } else {
+        result.push(v);
+    }
+}
+
 impl Value {
+    pub fn into_seq_flatten(self) -> Value {
+        let result = if let Value::Seq(_) = self {
+            let mut result = Vec::new();
+            flat_seq_value_rec(self, &mut result);
+            result
+        } else {
+            vec![self]
+        };
+        Value::Seq(result)
+    }
+    pub fn into_seq_reshaped(self, dimensions: &[usize]) -> Value {
+        let default = match self {
+            Value::Bool(_) => Value::Bool(false),
+            Value::String(_) => Value::String(String::new()),
+            Value::Unit => Value::Unit,
+            _ => Value::U8(0),
+        };
+        let Value::Seq(mut v) = self.into_seq_flatten() else { return Value::Unit };
+        if dimensions.is_empty() {
+            return Value::Seq(v);
+        }
+        let mut len = 1;
+        for d in dimensions {
+            len *= d;
+        }
+        v.resize(len, default);
+        for d in dimensions[1..].iter().rev() {
+            let d = *d;
+            let len = v.len();
+            let mut result: Vec<Value> = Vec::with_capacity(len / d);
+            for _ in (0..len).step_by(d) {
+                let tail = v.split_off(d);
+                result.push(Value::Seq(v));
+                v = tail;
+            }
+            v = result;
+        }
+        Value::Seq(v)
+    }
     #[inline]
     pub fn get_by_index(&self, idx: &Index) -> Option<&Value> {
         self.get_by_index_slice(idx.as_slice())
