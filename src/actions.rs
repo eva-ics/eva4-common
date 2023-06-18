@@ -1,6 +1,5 @@
-use crate::value::{Value, ValueOptionOwned};
-use crate::ItemStatus;
 /// Contains the action manager
+use crate::value::Value;
 use crate::{EResult, Error};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -62,9 +61,7 @@ impl TryFrom<u8> for Status {
 /// Params for unit actions
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UnitParams {
-    pub status: ItemStatus,
-    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
-    pub value: ValueOptionOwned,
+    pub value: Value,
 }
 
 /// Params for lmacro actions
@@ -102,11 +99,8 @@ pub struct LmacroParamsView<'a> {
 
 impl Params {
     #[inline]
-    pub fn new_unit(status: ItemStatus, value: Option<Value>) -> Self {
-        Self::Unit(UnitParams {
-            status,
-            value: value.into(),
-        })
+    pub fn new_unit(value: Value) -> Self {
+        Self::Unit(UnitParams { value })
     }
     #[inline]
     pub fn new_lmacro(args: Option<Vec<Value>>, kwargs: Option<HashMap<String, Value>>) -> Self {
