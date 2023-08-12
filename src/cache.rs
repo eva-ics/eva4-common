@@ -51,7 +51,7 @@ impl TtlCache {
             .log_slow_statements(log::LevelFilter::Warn, Duration::from_secs(2));
         let pool = SqlitePoolOptions::new()
             .max_connections(pool_size)
-            .connect_timeout(timeout)
+            .acquire_timeout(timeout)
             .connect_with(connection_options)
             .await?;
         sqlx::query("CREATE TABLE IF NOT EXISTS kv(k VARCHAR(256), v BLOB, t INT, PRIMARY KEY(k))")
