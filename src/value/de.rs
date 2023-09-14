@@ -336,7 +336,7 @@ impl<E> ValueDeserializer<E> {
     pub fn new(value: Value) -> Self {
         ValueDeserializer {
             value,
-            error: PhantomData::default(),
+            error: PhantomData,
         }
     }
 
@@ -398,12 +398,11 @@ where
         let (variant, value) = match self.value {
             Value::Map(value) => {
                 let mut iter = value.into_iter();
-                let Some((variant, value)) = iter.next() else
-                    {
-                        return Err(de::Error::invalid_value(
-                            de::Unexpected::Map,
-                            &"map with a single key",
-                        ));
+                let Some((variant, value)) = iter.next() else {
+                    return Err(de::Error::invalid_value(
+                        de::Unexpected::Map,
+                        &"map with a single key",
+                    ));
                 };
                 // enums are encoded as maps with a single key:value pair
                 if iter.next().is_some() {
@@ -426,7 +425,7 @@ where
         let d = EnumDeserializer {
             variant,
             value,
-            error: PhantomData::default(),
+            error: PhantomData,
         };
         visitor.visit_enum(d)
     }
@@ -518,7 +517,7 @@ where
     {
         let visitor = VariantDeserializer {
             value: self.value,
-            error: PhantomData::default(),
+            error: PhantomData,
         };
         seed.deserialize(ValueDeserializer::new(self.variant))
             .map(|v| (v, visitor))

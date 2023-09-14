@@ -324,7 +324,9 @@ impl Value {
             Value::Unit => Value::Unit,
             _ => Value::U8(0),
         };
-        let Value::Seq(mut v) = self.into_seq_flatten() else { return Value::Unit };
+        let Value::Seq(mut v) = self.into_seq_flatten() else {
+            return Value::Unit;
+        };
         if dimensions.is_empty() {
             return Value::Seq(v);
         }
