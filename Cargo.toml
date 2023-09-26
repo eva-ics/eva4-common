@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -75,3 +75,4 @@ common-payloads = ["uuid", "rand"]
 hyper-tools = ["hyper", "hyper-static"]
 full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers", "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload", "logic", "logger", "axum"]
 skip_self_test_serde = []
+openssl_no_fips  = []
