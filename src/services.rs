@@ -146,7 +146,7 @@ impl Initial {
     }
     #[inline]
     pub fn init(&self) -> EResult<()> {
-        #[cfg(not(feature = "openssl_no_fips"))]
+        #[cfg(not(feature = "openssl-no-fips"))]
         if self.fips {
             openssl::fips::enable(true)?;
         }
