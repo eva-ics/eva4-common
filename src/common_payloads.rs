@@ -159,7 +159,7 @@ where
 
 impl<T> ValueOrList<T>
 where
-    T: Send + Sync + Clone,
+    T: Send + Sync + Clone + PartialEq,
 {
     pub fn is_empty(&self) -> bool {
         match self {
@@ -192,6 +192,12 @@ where
         match self {
             ValueOrList::Single(v) => vec![v],
             ValueOrList::Multiple(v) => v,
+        }
+    }
+    pub fn contains(&self, value: &T) -> bool {
+        match self {
+            ValueOrList::Single(v) => v == value,
+            ValueOrList::Multiple(v) => v.contains(value),
         }
     }
 }
