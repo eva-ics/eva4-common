@@ -606,11 +606,11 @@ struct AclItemsPvt {
     rpvt: PathMaskList,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
-struct AclItems {
-    #[serde(default)]
-    items: OIDMaskList,
-}
+//#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+//struct AclItems {
+//#[serde(default)]
+//items: OIDMaskList,
+//}
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 fn is_false(val: &bool) -> bool {
@@ -626,7 +626,7 @@ pub struct Acl {
     #[serde(default)]
     read: AclItemsPvt,
     #[serde(default)]
-    write: AclItems,
+    write: AclItemsPvt,
     #[serde(default)]
     deny_read: AclItemsPvt,
     #[serde(default, alias = "deny")]
@@ -679,6 +679,13 @@ impl Acl {
     #[inline]
     pub fn check_pvt_read(&self, path: &str) -> bool {
         self.admin || (self.read.pvt.matches(path) && !self.deny_read.pvt.matches(path))
+    }
+    #[inline]
+    pub fn check_pvt_write(&self, path: &str) -> bool {
+        self.admin
+            || (self.write.pvt.matches(path)
+                && !self.deny_write.pvt.matches(path)
+                && !self.deny_read.pvt.matches(path))
     }
     #[inline]
     pub fn check_rpvt_read(&self, path: &str) -> bool {
@@ -740,6 +747,16 @@ impl Acl {
             Ok(())
         } else {
             Err(Error::access(format!("read access required for: {}", path)))
+        }
+    }
+    pub fn require_pvt_write(&self, path: &str) -> EResult<()> {
+        if self.check_pvt_write(path) {
+            Ok(())
+        } else {
+            Err(Error::access(format!(
+                "write access required for: {}",
+                path
+            )))
         }
     }
     pub fn require_rpvt_read(&self, path: &str) -> EResult<()> {
