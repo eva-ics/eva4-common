@@ -931,6 +931,11 @@ mod tests {
         assert_eq!(p.matches(&"unit:a/b/zzz".parse().unwrap()), true);
         assert_eq!(p.matches(&"unit:a/b/zzz/xxx".parse().unwrap()), true);
         assert_eq!(p.matches(&"unit:a/c/zzz/xxx".parse().unwrap()), true);
+
+        let p = OIDMaskList::from_str_list(&["sensor:content/#"]).unwrap();
+        assert_eq!(p.matches(&"sensor:content/data".parse().unwrap()), true);
+        let p = OIDMaskList::from_str_list(&["sensor:+"]).unwrap();
+        assert_ne!(p.matches(&"sensor:content/data".parse().unwrap()), true);
     }
 
     #[test]
