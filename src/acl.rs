@@ -651,8 +651,8 @@ impl Acl {
             let allow_write: HashSet<String> =
                 self.write.items.as_string_vec().into_iter().collect();
             allow.extend(allow_write);
-            //let deny: HashSet<String> = self.deny.items.as_string_vec().into_iter().collect();
-            (allow.into_iter().collect(), Vec::new())
+            let deny: HashSet<String> = self.deny_read.items.as_string_vec().into_iter().collect();
+            (allow.into_iter().collect(), deny.into_iter().collect())
         }
     }
     #[inline]
