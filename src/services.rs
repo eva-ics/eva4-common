@@ -561,21 +561,21 @@ impl BusConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MethodParamInfo {
     #[serde(default)]
-    required: bool,
+    pub required: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MethodInfo {
     #[serde(default)]
-    description: String,
-    params: HashMap<String, MethodParamInfo>,
+    pub description: String,
+    pub params: HashMap<String, MethodParamInfo>,
 }
 
 /// info-structure only, can be used by clients for auto-completion
 pub struct ServiceMethod {
-    name: String,
-    description: String,
-    params: HashMap<String, MethodParamInfo>,
+    pub name: String,
+    pub description: String,
+    pub params: HashMap<String, MethodParamInfo>,
 }
 
 impl ServiceMethod {
