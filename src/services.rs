@@ -606,13 +606,13 @@ impl ServiceMethod {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ServiceInfo {
     #[serde(default)]
-    author: String,
+    pub author: String,
     #[serde(default)]
-    version: String,
+    pub version: String,
     #[serde(default)]
-    description: String,
+    pub description: String,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    methods: HashMap<String, MethodInfo>,
+    pub methods: HashMap<String, MethodInfo>,
 }
 
 impl ServiceInfo {
