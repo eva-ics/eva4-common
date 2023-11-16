@@ -559,13 +559,13 @@ impl BusConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct MethodParamInfo {
+pub struct MethodParamInfo {
     #[serde(default)]
     pub required: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct MethodInfo {
+pub struct MethodInfo {
     #[serde(default)]
     pub description: String,
     pub params: HashMap<String, MethodParamInfo>,
