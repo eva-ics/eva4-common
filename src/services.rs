@@ -437,6 +437,17 @@ impl Initial {
         self.data_path = self.data_path().unwrap_or_default().to_owned();
         let user = self.user.take().unwrap_or_default();
         self.user.replace(user);
+        let timeout = self
+            .timeout
+            .default
+            .unwrap_or(crate::DEFAULT_TIMEOUT.as_secs_f64());
+        self.timeout.default.replace(timeout);
+        if self.timeout.startup.is_none() {
+            self.timeout.startup.replace(timeout);
+        }
+        if self.timeout.shutdown.is_none() {
+            self.timeout.shutdown.replace(timeout);
+        }
         self
     }
 }
