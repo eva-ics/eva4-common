@@ -400,32 +400,35 @@ impl Initial {
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
         if let Some(ref user) = self.user {
-            let u = get_system_user(user)?;
-            if nix::unistd::getuid() != u.uid {
-                let c_user = CString::new(user.as_str())
-                    .map_err(|e| Error::failed(format!("Failed to parse user {}: {}", user, e)))?;
+            if !user.is_empty() {
+                let u = get_system_user(user)?;
+                if nix::unistd::getuid() != u.uid {
+                    let c_user = CString::new(user.as_str()).map_err(|e| {
+                        Error::failed(format!("Failed to parse user {}: {}", user, e))
+                    })?;
 
-                let groups = nix::unistd::getgrouplist(&c_user, u.gid).map_err(|e| {
-                    Error::failed(format!("Failed to get groups for user {}: {}", user, e))
-                })?;
-                nix::unistd::setgroups(&groups).map_err(|e| {
-                    Error::failed(format!(
-                        "Failed to switch the process groups for user {}: {}",
-                        user, e
-                    ))
-                })?;
-                nix::unistd::setgid(u.gid).map_err(|e| {
-                    Error::failed(format!(
-                        "Failed to switch the process group for user {}: {}",
-                        user, e
-                    ))
-                })?;
-                nix::unistd::setuid(u.uid).map_err(|e| {
-                    Error::failed(format!(
-                        "Failed to switch the process user to {}: {}",
-                        user, e
-                    ))
-                })?;
+                    let groups = nix::unistd::getgrouplist(&c_user, u.gid).map_err(|e| {
+                        Error::failed(format!("Failed to get groups for user {}: {}", user, e))
+                    })?;
+                    nix::unistd::setgroups(&groups).map_err(|e| {
+                        Error::failed(format!(
+                            "Failed to switch the process groups for user {}: {}",
+                            user, e
+                        ))
+                    })?;
+                    nix::unistd::setgid(u.gid).map_err(|e| {
+                        Error::failed(format!(
+                            "Failed to switch the process group for user {}: {}",
+                            user, e
+                        ))
+                    })?;
+                    nix::unistd::setuid(u.uid).map_err(|e| {
+                        Error::failed(format!(
+                            "Failed to switch the process user to {}: {}",
+                            user, e
+                        ))
+                    })?;
+                }
             }
         }
         Ok(())
