@@ -430,6 +430,12 @@ impl Initial {
         }
         Ok(())
     }
+    pub fn into_legacy_compat(mut self) -> Self {
+        self.data_path = self.data_path().unwrap_or_default().to_owned();
+        let user = self.user.take().unwrap_or_default();
+        self.user.replace(user);
+        self
+    }
 }
 
 pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
