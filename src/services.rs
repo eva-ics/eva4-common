@@ -448,6 +448,10 @@ impl Initial {
         if self.timeout.shutdown.is_none() {
             self.timeout.shutdown.replace(timeout);
         }
+        let config = self
+            .take_config()
+            .unwrap_or_else(|| Value::Map(<_>::default()));
+        self.config.replace(config);
         self
     }
 }
