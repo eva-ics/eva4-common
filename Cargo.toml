@@ -10,10 +10,10 @@ readme = "README.md"
 keywords = ["eva-ics", "iot", "industrial", "scada", "cloud"]
 
 [package.metadata.docs.rs]
-features = ["full"]
+features = ["full", "openssl-no-fips"]
 
 [package.metadata.playground]
-features = ["full"]
+features = ["full", "openssl-no-fips"]
 
 [lib]
 name = "eva_common"
