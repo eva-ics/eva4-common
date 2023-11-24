@@ -7,6 +7,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 pub const RAW_STATE_TOPIC: &str = "RAW/";
+pub const RAW_STATE_BULK_TOPIC: &str = "RAW";
 pub const LOCAL_STATE_TOPIC: &str = "ST/LOC/";
 pub const REMOTE_STATE_TOPIC: &str = "ST/REM/";
 pub const REMOTE_ARCHIVE_STATE_TOPIC: &str = "ST/RAR/";
@@ -161,6 +162,58 @@ impl RawStateEventOwned {
     pub fn force(mut self) -> Self {
         self.force = true;
         self
+    }
+}
+
+#[derive(Serialize)]
+pub struct RawStateBulkEvent<'a> {
+    #[serde(alias = "i")]
+    pub oid: &'a OID,
+    #[serde(flatten)]
+    pub raw: RawStateEvent<'a>,
+}
+
+impl<'a> RawStateBulkEvent<'a> {
+    #[inline]
+    pub fn new(oid: &'a OID, rse: RawStateEvent<'a>) -> Self {
+        Self { oid, raw: rse }
+    }
+    #[inline]
+    pub fn split_into_oid_and_rse(self) -> (&'a OID, RawStateEvent<'a>) {
+        (self.oid, self.raw)
+    }
+}
+
+impl<'a> From<RawStateBulkEvent<'a>> for RawStateEvent<'a> {
+    #[inline]
+    fn from(r: RawStateBulkEvent<'a>) -> Self {
+        r.raw
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RawStateBulkEventOwned {
+    #[serde(alias = "i")]
+    pub oid: OID,
+    #[serde(flatten)]
+    pub raw: RawStateEventOwned,
+}
+
+impl RawStateBulkEventOwned {
+    #[inline]
+    pub fn new(oid: OID, rseo: RawStateEventOwned) -> Self {
+        Self { oid, raw: rseo }
+    }
+    #[inline]
+    pub fn split_into_oid_and_rseo(self) -> (OID, RawStateEventOwned) {
+        (self.oid, self.raw)
+    }
+}
+
+impl From<RawStateBulkEventOwned> for RawStateEventOwned {
+    #[inline]
+    fn from(r: RawStateBulkEventOwned) -> Self {
+        r.raw
     }
 }
 
