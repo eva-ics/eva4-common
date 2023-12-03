@@ -134,6 +134,131 @@ fn parse_time_frame(s: &str) -> Option<f64> {
     }
 }
 
+const ERR_INVALID_JSON_PATH: &str = "invalid JSON path, does not start with $";
+const ERR_UNSUPPORTED_JSON_PATH_DOUBLE_DOT: &str = "unsupported JSON path (..)";
+
+fn value_jp_lookup<'a>(
+    value: &'a Value,
+    sp: &mut std::str::Split<'_, char>,
+    allow_empty: bool,
+) -> EResult<Option<&'a Value>> {
+    macro_rules! abort {
+        () => {
+            return Ok(None)
+        };
+    }
+    if let Some(x) = sp.next() {
+        if x.is_empty() {
+            if allow_empty {
+                return value_jp_lookup(value, sp, false);
+            }
+            return Err(Error::invalid_params(ERR_UNSUPPORTED_JSON_PATH_DOUBLE_DOT));
+        }
+        let (field, idx) = if x.ends_with(']') {
+            let mut spx = x.rsplitn(2, '[');
+            let idx_s = spx.next().unwrap();
+            let idx: usize = idx_s[..idx_s.len() - 1]
+                .parse()
+                .map_err(|e| Error::invalid_params(format!("invalid path index: {} ({})", x, e)))?;
+            let field = spx
+                .next()
+                .ok_or_else(|| Error::invalid_params(format!("invalid path: {}", x)))?;
+            (if field.is_empty() { None } else { Some(field) }, Some(idx))
+        } else {
+            (Some(x), None)
+        };
+        let field_val = if let Some(f) = field {
+            let Value::Map(m) = value else { abort!() };
+            let Some(v) = m.get(&Value::String(f.to_owned())) else {
+                abort!()
+            };
+            v
+        } else {
+            value
+        };
+        let field_indexed = if let Some(i) = idx {
+            let Value::Seq(s) = field_val else { abort!() };
+            let Some(v) = s.get(i) else { abort!() };
+            v
+        } else {
+            field_val
+        };
+        return value_jp_lookup(field_indexed, sp, true);
+    }
+    Ok(Some(value))
+}
+
+fn value_jp_insert(
+    source: &mut Value,
+    sp: &mut std::str::Split<'_, char>,
+    value: Value,
+    allow_empty: bool,
+) -> EResult<()> {
+    macro_rules! abort {
+        ($err:expr) => {
+            return Err(Error::invalid_data($err))
+        };
+    }
+    if let Some(x) = sp.next() {
+        if x.is_empty() {
+            if allow_empty {
+                return value_jp_insert(source, sp, value, false);
+            }
+            return Err(Error::invalid_params(ERR_UNSUPPORTED_JSON_PATH_DOUBLE_DOT));
+        }
+        let (field, idx) = if x.ends_with(']') {
+            let mut spx = x.rsplitn(2, '[');
+            let idx_s = spx.next().unwrap();
+            let idx: usize = idx_s[..idx_s.len() - 1]
+                .parse()
+                .map_err(|e| Error::invalid_params(format!("invalid path index: {} ({})", x, e)))?;
+            let field = spx
+                .next()
+                .ok_or_else(|| Error::invalid_params(format!("invalid path: {}", x)))?;
+            (if field.is_empty() { None } else { Some(field) }, Some(idx))
+        } else {
+            (Some(x), None)
+        };
+        let field_val = if let Some(f) = field {
+            if *source == Value::Unit {
+                *source = Value::Map(<_>::default());
+            }
+            let Value::Map(m) = source else {
+                abort!("source is not a map")
+            };
+            m.entry(Value::String(f.to_owned())).or_insert(Value::Unit)
+        } else {
+            source
+        };
+        let field_indexed = if let Some(i) = idx {
+            if *field_val == Value::Unit {
+                *field_val = Value::Seq(<_>::default());
+            }
+            let Value::Seq(s) = field_val else {
+                abort!("source is not a sequence")
+            };
+            if s.len() < i + 1 {
+                s.resize(i + 1, Value::Unit);
+            }
+            s.get_mut(i).unwrap()
+        } else {
+            field_val
+        };
+        return value_jp_insert(field_indexed, sp, value, true);
+    }
+    *source = value;
+    Ok(())
+}
+
+#[inline]
+fn parse_jp(path: &str) -> EResult<std::str::Split<'_, char>> {
+    if let Some(p) = path.strip_prefix('$') {
+        Ok(p.split('.'))
+    } else {
+        Err(Error::invalid_params(ERR_INVALID_JSON_PATH))
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub enum Value {
     Bool(bool),
@@ -307,6 +432,14 @@ fn flat_seq_value_rec(v: Value, result: &mut Vec<Value>) {
 }
 
 impl Value {
+    pub fn jp_lookup<'a>(&'a self, path: &str) -> EResult<Option<&'a Value>> {
+        let mut sp = parse_jp(path)?;
+        value_jp_lookup(self, &mut sp, true)
+    }
+    pub fn jp_insert(&mut self, path: &str, value: Value) -> EResult<()> {
+        let mut sp = parse_jp(path)?;
+        value_jp_insert(self, &mut sp, value, true)
+    }
     pub fn into_seq_flatten(self) -> Value {
         let result = if self.is_seq() {
             let mut result = Vec::new();
