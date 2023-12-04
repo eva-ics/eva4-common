@@ -134,7 +134,7 @@ fn parse_time_frame(s: &str) -> Option<f64> {
     }
 }
 
-const ERR_INVALID_JSON_PATH: &str = "invalid JSON path, does not start with $";
+const ERR_INVALID_JSON_PATH: &str = "invalid JSON path, does not start with $.";
 const ERR_UNSUPPORTED_JSON_PATH_DOUBLE_DOT: &str = "unsupported JSON path (..)";
 
 fn value_jp_lookup<'a>(
@@ -252,7 +252,7 @@ fn value_jp_insert(
 
 #[inline]
 fn parse_jp(path: &str) -> EResult<std::str::Split<'_, char>> {
-    if let Some(p) = path.strip_prefix('$') {
+    if let Some(p) = path.strip_prefix("$.") {
         Ok(p.split('.'))
     } else {
         Err(Error::invalid_params(ERR_INVALID_JSON_PATH))
