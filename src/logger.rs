@@ -96,7 +96,6 @@ impl Log for BusLogger {
                                 && p.message == msg
                                 && p.t.elapsed() < MSG_MAX_REPEAT_DELAY
                             {
-                                p.t = Instant::now();
                                 return;
                             }
                         }
