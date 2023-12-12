@@ -23,6 +23,7 @@ pub const LOG_LEVEL_INFO: u8 = 20;
 pub const LOG_LEVEL_WARN: u8 = 30;
 pub const LOG_LEVEL_ERROR: u8 = 40;
 
+#[inline]
 pub fn log_level_code(level: log::Level) -> u8 {
     match level {
         log::Level::Trace => LOG_LEVEL_TRACE,

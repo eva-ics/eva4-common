@@ -20,7 +20,7 @@ name = "eva_common"
 path = "src/lib.rs"
 
 [dependencies]
-serde = { version = "1.0.143", default-features = false, features = ["derive", "std"] }
+serde = { version = "1.0.143", default-features = false, features = ["derive", "std", "rc"] }
 serde_repr = "0.1.7"
 serde_json = "1.0.83"
 ordered-float = "2.8.0"
@@ -51,6 +51,7 @@ dateparser = { version = "0.1.7", optional = true }
 openssl = { version = "0.10.42", optional = true }
 axum = { version = "0.6.12", default_features=false, features=[], optional = true }
 true = { version = "0.1.0", optional = true }
+parking_lot = { version = "0.12.1", optional = true }
 
 [features]
 nostd = []
@@ -60,7 +61,7 @@ events = [] # common events
 services = ["bus-rpc", "tokio", "registry", "nix", "openssl"] # service structures and tools
 actions = ["uuid"] # action structures and tools
 registry = ["busrt", "payload"]
-logger = ["async-channel", "lazy_static", "busrt", "tokio", "once_cell", "payload", "uuid"]
+logger = ["async-channel", "lazy_static", "busrt", "tokio", "once_cell", "payload", "uuid", "parking_lot"]
 extended-value = ["bmart", "async-recursion", "serde_yaml", "tokio"]
 time = ["nix", "dateparser"] # timestamp helpers
 db = ["yedb", "sqlx"] # db bindings

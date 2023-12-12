@@ -9,7 +9,11 @@ use once_cell::sync::OnceCell;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
 use uuid::Uuid;
+
+const MSG_MAX_REPEAT_DELAY: Duration = Duration::from_millis(100);
 
 tokio::task_local! {
     pub static CALL_TRACE_ID: Option<Uuid>;
@@ -18,7 +22,7 @@ tokio::task_local! {
 #[derive(Serialize)]
 pub struct TraceMessage {
     l: u8,
-    msg: String,
+    msg: Arc<String>,
 }
 
 lazy_static! {
@@ -31,16 +35,24 @@ lazy_static! {
         topics.insert(Level::Error, format!("{}{}", LOG_INPUT_TOPIC, "error"));
         topics
     };
-    static ref LOG_TX: OnceCell<async_channel::Sender<(log::Level, String)>> = <_>::default();
+    static ref LOG_TX: OnceCell<async_channel::Sender<(log::Level, Arc<String>)>> = <_>::default();
     static ref TRACE_TX: OnceCell<async_channel::Sender<(TraceMessage, Uuid)>> = <_>::default();
 }
 
 static BUS_LOGGER: BusLogger = BusLogger {
     log_filter: OnceCell::new(),
+    prev_message: parking_lot::Mutex::new(None),
 };
+
+struct LogMessage {
+    level: log::Level,
+    message: Arc<String>,
+    t: Instant,
+}
 
 struct BusLogger {
     log_filter: OnceCell<LevelFilter>,
+    prev_message: parking_lot::Mutex<Option<LogMessage>>,
 }
 
 impl Log for BusLogger {
@@ -51,11 +63,14 @@ impl Log for BusLogger {
     #[inline]
     fn log(&self, record: &log::Record) {
         if self.enabled(record.metadata()) {
-            if let Some(tx) = LOG_TX.get() {
-                let level = record.level();
-                if level <= *self.log_filter.get().unwrap() {
-                    let _r = tx.try_send((level, format!("{}", record.args())));
-                }
+            let mut message: Option<Arc<String>> = None;
+            macro_rules! format_msg {
+                () => {{
+                    if message.is_none() {
+                        message.replace(Arc::new(record.args().to_string()));
+                    }
+                    message.as_ref().unwrap().clone()
+                }};
             }
             let trid: Option<Uuid> = CALL_TRACE_ID.try_with(Clone::clone).unwrap_or_default();
             if let Some(trace_id) = trid {
@@ -63,10 +78,35 @@ impl Log for BusLogger {
                     let _r = tx.try_send((
                         TraceMessage {
                             l: crate::log_level_code(record.level()),
-                            msg: format!("{}", record.args()),
+                            msg: format_msg!(),
                         },
                         trace_id,
                     ));
+                }
+            }
+            if let Some(tx) = LOG_TX.get() {
+                let level = record.level();
+                if level <= *self.log_filter.get().unwrap() {
+                    let msg: Arc<String> = format_msg!();
+                    {
+                        let mut prev = self.prev_message.lock();
+                        // ignore messages wich repeat too fast
+                        if let Some(p) = prev.as_mut() {
+                            if p.level == level
+                                && p.message == msg
+                                && p.t.elapsed() < MSG_MAX_REPEAT_DELAY
+                            {
+                                p.t = Instant::now();
+                                return;
+                            }
+                        }
+                        prev.replace(LogMessage {
+                            level,
+                            message: msg.clone(),
+                            t: Instant::now(),
+                        });
+                    }
+                    let _r = tx.try_send((level, msg));
                 }
             }
         }
@@ -77,7 +117,7 @@ impl Log for BusLogger {
 
 async fn handle_logs<C>(
     client: Arc<tokio::sync::Mutex<C>>,
-    rx: async_channel::Receiver<(Level, String)>,
+    rx: async_channel::Receiver<(Level, Arc<String>)>,
 ) where
     C: ?Sized + AsyncClient,
 {
