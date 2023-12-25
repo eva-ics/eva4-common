@@ -65,6 +65,8 @@ pub mod logic;
 pub mod payload;
 #[cfg(feature = "registry")]
 pub mod registry;
+#[cfg(feature = "serde-keyvalue")]
+pub mod serde_keyvalue;
 #[cfg(feature = "services")]
 pub mod services;
 #[cfg(feature = "time")]
