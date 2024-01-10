@@ -146,6 +146,12 @@ impl Initial {
     }
     #[inline]
     pub fn init(&self) -> EResult<()> {
+        #[cfg(feature = "openssl-no-fips")]
+        if self.fips {
+            return Err(Error::not_implemented(
+                "no FIPS 140 support, disable FIPS or switch to native package",
+            ));
+        }
         #[cfg(not(feature = "openssl-no-fips"))]
         if self.fips {
             openssl::fips::enable(true)?;
