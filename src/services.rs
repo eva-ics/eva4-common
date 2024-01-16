@@ -17,12 +17,14 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
-#[cfg(feature = "openssl-no-fips")]
+#[cfg(any(feature = "openssl-no-fips", feature = "openssl-vendored"))]
 pub fn enable_fips() -> EResult<()> {
-    panic!("FIPS can not be enabled, consider using a native OS distribution");
+    Err(Error::failed(
+        "FIPS can not be enabled, consider using a native OS distribution",
+    ))
 }
 
-#[cfg(not(feature = "openssl-no-fips"))]
+#[cfg(not(any(feature = "openssl-no-fips", feature = "openssl-vendored")))]
 pub fn enable_fips() -> EResult<()> {
     #[cfg(feature = "openssl3")]
     std::mem::forget(openssl::provider::Provider::load(None, "fips")?);
