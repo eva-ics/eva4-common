@@ -17,6 +17,15 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
+#[cfg(not(feature = "openssl-no-fips"))]
+pub fn enable_fips() -> EResult<()> {
+    #[cfg(feature = "openssl3")]
+    std::mem::forget(openssl::provider::Provider::load(None, "fips")?);
+    #[cfg(not(feature = "openssl3"))]
+    openssl::fips::enable(true)?;
+    Ok(())
+}
+
 pub struct Registry {
     id: String,
     rpc: Arc<RpcClient>,
@@ -154,7 +163,7 @@ impl Initial {
         }
         #[cfg(not(feature = "openssl-no-fips"))]
         if self.fips {
-            openssl::fips::enable(true)?;
+            enable_fips()?;
         }
         Ok(())
     }
