@@ -17,6 +17,11 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
+#[cfg(feature = "openssl-no-fips")]
+pub fn enable_fips() -> EResult<()> {
+    panic!("FIPS can not be enabled, consider using a native OS distribution");
+}
+
 #[cfg(not(feature = "openssl-no-fips"))]
 pub fn enable_fips() -> EResult<()> {
     #[cfg(feature = "openssl3")]
@@ -161,7 +166,6 @@ impl Initial {
                 "no FIPS 140 support, disable FIPS or switch to native package",
             ));
         }
-        #[cfg(not(feature = "openssl-no-fips"))]
         if self.fips {
             enable_fips()?;
         }
