@@ -34,8 +34,8 @@ impl Type<Postgres> for OID {
         <str as Type<Postgres>>::type_info()
     }
     fn compatible(ty: &postgres::PgTypeInfo) -> bool {
-        let s = ty.to_string();
-        s == "TEXT" || s == "VARCHAR"
+        *ty == postgres::PgTypeInfo::with_name("VARCHAR")
+            || *ty == postgres::PgTypeInfo::with_name("TEXT")
     }
 }
 
