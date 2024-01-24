@@ -122,6 +122,7 @@ impl<'q> Encode<'q, Postgres> for Value {
 impl<'r> Decode<'r, Postgres> for Value {
     fn decode(value: postgres::PgValueRef<'r>) -> Result<Self, BoxDynError> {
         let buf = value.as_bytes()?;
+        assert_eq!(buf[0], 1, "unsupported JSONB format version {}", buf[0]);
         serde_json::from_slice(&buf[1..]).map_err(Into::into)
     }
 }
