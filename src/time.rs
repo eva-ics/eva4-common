@@ -1,6 +1,7 @@
 use crate::{EResult, Error, Value};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::time::Instant;
+use std::fmt;
+use std::time::{Duration, Instant};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn serialize_time_now<S>(_value: &(), serializer: S) -> Result<S::Ok, S::Error>
@@ -40,6 +41,66 @@ impl Serialize for Time {
     }
 }
 
+struct TimeVisitor;
+
+impl<'de> serde::de::Visitor<'de> for TimeVisitor {
+    type Value = Time;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a float, an unsigned integer, or a 2-element array")
+    }
+
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Time {
+            sec: value,
+            nsec: 0,
+        })
+    }
+
+    fn visit_f32<E>(self, value: f32) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        value
+            .try_into()
+            .map_err(|_| serde::de::Error::custom("invalid time value"))
+    }
+
+    fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        value
+            .try_into()
+            .map_err(|_| serde::de::Error::custom("invalid time value"))
+    }
+
+    fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+    where
+        V: serde::de::SeqAccess<'de>,
+    {
+        let s: u64 = seq
+            .next_element()?
+            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+        let ns: u64 = seq
+            .next_element()?
+            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+        Ok(Time { sec: s, nsec: ns })
+    }
+}
+
+impl<'de> Deserialize<'de> for Time {
+    fn deserialize<D>(deserializer: D) -> Result<Time, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TimeVisitor)
+    }
+}
+
 impl Time {
     #[inline]
     #[allow(clippy::similar_names)]
@@ -53,6 +114,15 @@ impl Time {
     #[allow(clippy::cast_sign_loss)]
     pub fn now() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME).unwrap();
+        Self {
+            sec: t.tv_sec() as u64,
+            nsec: t.tv_nsec() as u64,
+        }
+    }
+    #[inline]
+    #[allow(clippy::cast_sign_loss)]
+    pub fn now_monotonic() -> Self {
+        let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC).unwrap();
         Self {
             sec: t.tv_sec() as u64,
             nsec: t.tv_nsec() as u64,
@@ -107,15 +177,164 @@ impl From<Time> for f64 {
     }
 }
 
+impl From<f64> for Time {
+    #[inline]
+    fn from(v: f64) -> Time {
+        Time::from_timestamp(v)
+    }
+}
+
+impl From<f32> for Time {
+    #[inline]
+    fn from(v: f32) -> Time {
+        Time::from_timestamp(v.into())
+    }
+}
+
 impl TryFrom<SystemTime> for Time {
     type Error = Error;
     #[inline]
     fn try_from(t: SystemTime) -> EResult<Self> {
-        Ok(Time::from_timestamp(
-            t.duration_since(UNIX_EPOCH)
-                .map_err(|_| Error::core("systime before UNIX EPOCH"))?
-                .as_secs_f64(),
-        ))
+        Ok(t.duration_since(UNIX_EPOCH)
+            .map_err(|_| Error::core("systime before UNIX EPOCH"))?
+            .into())
+    }
+}
+
+impl fmt::Display for Time {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.timestamp())
+    }
+}
+
+impl From<Duration> for Time {
+    fn from(v: Duration) -> Self {
+        Self {
+            sec: v.as_secs(),
+            nsec: u64::from(v.subsec_nanos()),
+        }
+    }
+}
+
+/// # Panics
+///
+/// Will panic if duration in nanoseconds > u64::MAX
+impl core::ops::Add<Duration> for Time {
+    type Output = Time;
+    fn add(self, dur: Duration) -> Time {
+        let t_ns = self.timestamp_ns() + u64::try_from(dur.as_nanos()).unwrap();
+        Time::from_timestamp_ns(t_ns)
+    }
+}
+
+impl core::ops::Add<f64> for Time {
+    type Output = Time;
+    fn add(self, value: f64) -> Time {
+        Time::from_timestamp(self.timestamp() + value)
+    }
+}
+
+impl core::ops::Sub<f64> for Time {
+    type Output = Time;
+    fn sub(self, value: f64) -> Time {
+        Time::from_timestamp(self.timestamp() - value)
+    }
+}
+
+impl core::ops::Add<u64> for Time {
+    type Output = Time;
+    fn add(self, value: u64) -> Time {
+        Time {
+            sec: self.sec + value,
+            nsec: self.nsec,
+        }
+    }
+}
+
+impl core::ops::Sub<u64> for Time {
+    type Output = Time;
+    fn sub(self, value: u64) -> Time {
+        Time {
+            sec: self.sec - value,
+            nsec: self.nsec,
+        }
+    }
+}
+
+impl core::ops::Add<u32> for Time {
+    type Output = Time;
+    fn add(self, value: u32) -> Time {
+        Time {
+            sec: self.sec + u64::from(value),
+            nsec: self.nsec,
+        }
+    }
+}
+
+impl core::ops::Sub<u32> for Time {
+    type Output = Time;
+    fn sub(self, value: u32) -> Time {
+        Time {
+            sec: self.sec - u64::from(value),
+            nsec: self.nsec,
+        }
+    }
+}
+
+/// # Panics
+///
+/// Will panic if duration in nanoseconds > u64::MAX
+impl core::ops::Sub<Duration> for Time {
+    type Output = Time;
+    fn sub(self, dur: Duration) -> Time {
+        let t_ns = self.timestamp_ns() - u64::try_from(dur.as_nanos()).unwrap();
+        Time::from_timestamp_ns(t_ns)
+    }
+}
+
+#[cfg(feature = "chrono")]
+mod convert_chrono {
+    use super::Time;
+    use crate::{EResult, Error};
+    use chrono::{DateTime, Local, NaiveDateTime, Utc};
+
+    impl TryFrom<Time> for NaiveDateTime {
+        type Error = Error;
+        #[inline]
+        fn try_from(t: Time) -> EResult<Self> {
+            NaiveDateTime::from_timestamp_opt(i64::try_from(t.sec)?, u32::try_from(t.nsec)?)
+                .ok_or_else(|| Error::invalid_data("unable to convert timestamp"))
+        }
+    }
+    impl TryFrom<Time> for DateTime<Utc> {
+        type Error = Error;
+        fn try_from(t: Time) -> EResult<Self> {
+            let nt = NaiveDateTime::try_from(t)?;
+            let dt_utc = DateTime::<Utc>::from_naive_utc_and_offset(nt, Utc);
+            Ok(dt_utc)
+        }
+    }
+    impl TryFrom<Time> for DateTime<Local> {
+        type Error = Error;
+        fn try_from(t: Time) -> EResult<Self> {
+            let dt_utc = DateTime::<Utc>::try_from(t)?;
+            Ok(DateTime::from(dt_utc))
+        }
+    }
+
+    impl Time {
+        #[inline]
+        pub fn try_into_naivedatetime(self) -> EResult<NaiveDateTime> {
+            self.try_into()
+        }
+        #[inline]
+        pub fn try_into_datetime_local(self) -> EResult<DateTime<Local>> {
+            self.try_into()
+        }
+        #[inline]
+        pub fn try_into_datetime_utc(self) -> EResult<DateTime<Utc>> {
+            self.try_into()
+        }
     }
 }
 
