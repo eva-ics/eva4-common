@@ -109,7 +109,7 @@ impl Time {
     }
     /// # Panics
     ///
-    /// Will panic if the system clock is not available
+    /// Will panic if the system real-time clock is not available
     #[inline]
     #[allow(clippy::cast_sign_loss)]
     pub fn now() -> Self {
@@ -119,6 +119,9 @@ impl Time {
             nsec: t.tv_nsec() as u64,
         }
     }
+    /// # Panics
+    ///
+    /// Will panic if the system monotonic clock is not available
     #[inline]
     #[allow(clippy::cast_sign_loss)]
     pub fn now_monotonic() -> Self {
