@@ -1,5 +1,5 @@
 use crate::value::{Value, ValueOption, ValueOptionOwned};
-use crate::Error;
+use crate::{EResult, Error};
 use crate::{ItemStatus, IEID, OID};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::hash::{Hash, Hasher};
@@ -463,5 +463,45 @@ impl From<FullItemStateAndInfoOwned> for ReplicationInventoryItem {
             meta: s.meta,
             enabled: s.enabled,
         }
+    }
+}
+
+pub struct EventBuffer<T> {
+    data: parking_lot::Mutex<Vec<T>>,
+    size: usize,
+}
+
+#[allow(dead_code)]
+impl<T> EventBuffer<T> {
+    #[inline]
+    pub fn bounded(size: usize) -> Self {
+        Self {
+            data: <_>::default(),
+            size,
+        }
+    }
+    #[inline]
+    pub fn unbounded() -> Self {
+        Self {
+            data: <_>::default(),
+            size: 0,
+        }
+    }
+    pub fn push(&self, value: T) -> EResult<()> {
+        let mut buf = self.data.lock();
+        if self.size > 0 && buf.len() >= self.size {
+            return Err(Error::failed("buffer overflow, event dropped"));
+        }
+        buf.push(value);
+        Ok(())
+    }
+    pub fn len(&self) -> usize {
+        self.data.lock().len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.data.lock().is_empty()
+    }
+    pub fn take(&self) -> Vec<T> {
+        std::mem::take(&mut *self.data.lock())
     }
 }
