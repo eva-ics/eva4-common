@@ -206,39 +206,44 @@ impl<'c> Transaction<'c> {
     }
 }
 
-/// Initialize database, must be called first and only once
+/// Initialize database, must be called first and only once,
+/// enables module-wide pool
 #[allow(clippy::module_name_repetitions)]
 pub async fn db_init(conn: &str, pool_size: u32, timeout: Duration) -> EResult<()> {
-    let pool = if conn.starts_with("sqlite://") {
+    DB_POOL
+        .set(create_pool(conn, pool_size, timeout).await?)
+        .map_err(|_| Error::core("unable to set DB_POOL"))?;
+    Ok(())
+}
+
+/// Creates a pool to use it without the module
+pub async fn create_pool(conn: &str, pool_size: u32, timeout: Duration) -> EResult<DbPool> {
+    if conn.starts_with("sqlite://") {
         let mut opts = SqliteConnectOptions::from_str(conn)?
             .create_if_missing(true)
             .synchronous(sqlx::sqlite::SqliteSynchronous::Extra)
             .busy_timeout(timeout);
         opts.log_statements(log::LevelFilter::Trace)
             .log_slow_statements(log::LevelFilter::Warn, timeout);
-        DbPool::Sqlite(
+        Ok(DbPool::Sqlite(
             SqlitePoolOptions::new()
                 .max_connections(pool_size)
                 .acquire_timeout(timeout)
                 .connect_with(opts)
                 .await?,
-        )
+        ))
     } else if conn.starts_with("postgres://") {
         let mut opts = PgConnectOptions::from_str(conn)?;
         opts.log_statements(log::LevelFilter::Trace)
             .log_slow_statements(log::LevelFilter::Warn, timeout);
-        DbPool::Postgres(
+        Ok(DbPool::Postgres(
             PgPoolOptions::new()
                 .max_connections(pool_size)
                 .acquire_timeout(timeout)
                 .connect_with(opts)
                 .await?,
-        )
+        ))
     } else {
-        return Err(Error::unsupported("Unsupported database kind"));
-    };
-    DB_POOL
-        .set(pool)
-        .map_err(|_| Error::core("unable to set DB_POOL"))?;
-    Ok(())
+        Err(Error::unsupported("Unsupported database kind"))
+    }
 }
