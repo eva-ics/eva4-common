@@ -5,6 +5,9 @@
 ///
 /// For Value type use JSONB only
 /// For OID use VARCHAR(1024)
+///
+/// For Time (feature "time" enabled) type use INTEGER for Sqlite and TIMESTAMP/TIMESTAMPTZ for
+/// Postgres
 use crate::{value::Value, EResult, Error, OID};
 use once_cell::sync::OnceCell;
 use sqlx::encode::IsNull;
@@ -124,6 +127,78 @@ impl<'r> Decode<'r, Postgres> for Value {
         let buf = value.as_bytes()?;
         assert_eq!(buf[0], 1, "unsupported JSONB format version {}", buf[0]);
         serde_json::from_slice(&buf[1..]).map_err(Into::into)
+    }
+}
+
+#[cfg(feature = "time")]
+mod time_impl {
+    use crate::time::Time;
+    use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef};
+    use sqlx::sqlite::{SqliteArgumentValue, SqliteTypeInfo, SqliteValueRef};
+    use sqlx::{encode::IsNull, error::BoxDynError, Decode, Encode, Postgres, Sqlite, Type};
+
+    const J2000_EPOCH_US: i64 = 946_684_800_000_000;
+
+    impl Type<Sqlite> for Time {
+        fn type_info() -> SqliteTypeInfo {
+            <i64 as Type<Sqlite>>::type_info()
+        }
+
+        fn compatible(ty: &SqliteTypeInfo) -> bool {
+            *ty == <i64 as Type<Sqlite>>::type_info()
+                || *ty == <i32 as Type<Sqlite>>::type_info()
+                || *ty == <i16 as Type<Sqlite>>::type_info()
+                || *ty == <i8 as Type<Sqlite>>::type_info()
+        }
+    }
+
+    impl<'q> Encode<'q, Sqlite> for Time {
+        fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
+            args.push(SqliteArgumentValue::Int64(
+                i64::try_from(self.timestamp_ns()).expect("timestamp too large"),
+            ));
+
+            IsNull::No
+        }
+    }
+
+    impl<'r> Decode<'r, Sqlite> for Time {
+        fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
+            let value = <i64 as Decode<Sqlite>>::decode(value)?;
+            Ok(Time::from_timestamp_ns(
+                value.try_into().unwrap_or_default(),
+            ))
+        }
+    }
+
+    impl Type<Postgres> for Time {
+        fn type_info() -> PgTypeInfo {
+            PgTypeInfo::with_name("TIMESTAMPTZ")
+        }
+        fn compatible(ty: &PgTypeInfo) -> bool {
+            *ty == PgTypeInfo::with_name("TIMESTAMPTZ") || *ty == PgTypeInfo::with_name("TIMESTAMP")
+        }
+    }
+
+    impl Encode<'_, Postgres> for Time {
+        fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+            let us =
+                i64::try_from(self.timestamp_us()).expect("timestamp too large") - J2000_EPOCH_US;
+            Encode::<Postgres>::encode(&us, buf)
+        }
+
+        fn size_hint(&self) -> usize {
+            std::mem::size_of::<i64>()
+        }
+    }
+
+    impl<'r> Decode<'r, Postgres> for Time {
+        fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
+            let us: i64 = Decode::<Postgres>::decode(value)?;
+            Ok(Time::from_timestamp_us(
+                (us + J2000_EPOCH_US).try_into().unwrap_or_default(),
+            ))
+        }
     }
 }
 

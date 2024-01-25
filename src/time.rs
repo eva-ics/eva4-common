@@ -11,6 +11,13 @@ where
     serializer.serialize_f64(Time::now().into())
 }
 
+/// Time
+///
+/// Serialized as f64
+/// Deserialized from unsigned integers (seconds), floats, [sec, nsec] seqs
+///
+/// With "db" feature provides sqlx interfaces for Sqlite (stored as nanoseconds integer) and
+/// Postgres (stored as TIMESTAMP/TIMESTAMPTZ)
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Time {
     sec: u64,
@@ -136,6 +143,20 @@ impl Time {
         Self {
             sec: timestamp_ns / 1_000_000_000,
             nsec: timestamp_ns % 1_000_000_000,
+        }
+    }
+    #[inline]
+    pub fn from_timestamp_us(timestamp_us: u64) -> Self {
+        Self {
+            sec: timestamp_us / 1_000_000,
+            nsec: timestamp_us % 1_000_000,
+        }
+    }
+    #[inline]
+    pub fn from_timestamp_ms(timestamp_ms: u64) -> Self {
+        Self {
+            sec: timestamp_ms / 1_000,
+            nsec: timestamp_ms % 1_000,
         }
     }
     #[allow(clippy::cast_sign_loss)]
@@ -295,7 +316,6 @@ impl core::ops::Sub<Duration> for Time {
     }
 }
 
-#[cfg(feature = "chrono")]
 mod convert_chrono {
     use super::Time;
     use crate::{EResult, Error};
