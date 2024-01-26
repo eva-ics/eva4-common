@@ -1,6 +1,7 @@
 use crate::{EResult, Error, Value};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
+use std::str::FromStr;
 use std::time::{Duration, Instant};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -22,6 +23,13 @@ where
 pub struct Time {
     sec: u64,
     nsec: u64,
+}
+
+impl FromStr for Time {
+    type Err = Error;
+    fn from_str(s: &str) -> EResult<Self> {
+        Ok(dateparser::parse(s).map_err(Error::invalid_data)?.into())
+    }
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -54,7 +62,7 @@ impl<'de> serde::de::Visitor<'de> for TimeVisitor {
     type Value = Time;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a float, an unsigned integer, or a 2-element array")
+        formatter.write_str("a string, float, an unsigned integer, or a 2-element array")
     }
 
     fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
@@ -96,6 +104,22 @@ impl<'de> serde::de::Visitor<'de> for TimeVisitor {
             .next_element()?
             .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
         Ok(Time { sec: s, nsec: ns })
+    }
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        value
+            .parse()
+            .map_err(|_| serde::de::Error::custom("invalid time string"))
+    }
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        value
+            .parse()
+            .map_err(|_| serde::de::Error::custom("invalid time string"))
     }
 }
 
@@ -346,6 +370,33 @@ mod convert_chrono {
         fn try_from(t: Time) -> EResult<Self> {
             let dt_utc = DateTime::<Utc>::try_from(t)?;
             Ok(DateTime::from(dt_utc))
+        }
+    }
+
+    impl From<NaiveDateTime> for Time {
+        fn from(datetime: NaiveDateTime) -> Self {
+            Time {
+                sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
+                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+            }
+        }
+    }
+
+    impl From<DateTime<Utc>> for Time {
+        fn from(datetime: DateTime<Utc>) -> Self {
+            Time {
+                sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
+                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+            }
+        }
+    }
+
+    impl From<DateTime<Local>> for Time {
+        fn from(datetime: DateTime<Local>) -> Self {
+            Time {
+                sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
+                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+            }
         }
     }
 
