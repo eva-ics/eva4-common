@@ -132,6 +132,13 @@ impl<'de> Deserialize<'de> for Time {
     }
 }
 
+impl Default for Time {
+    #[inline]
+    fn default() -> Self {
+        Self::now()
+    }
+}
+
 impl Time {
     #[inline]
     #[allow(clippy::similar_names)]
