@@ -694,6 +694,10 @@ impl Value {
             _ => false,
         }
     }
+    #[inline]
+    pub fn is_unit(&self) -> bool {
+        *self == Value::Unit
+    }
     pub fn is_numeric(&self) -> bool {
         match self {
             Value::U8(_)
