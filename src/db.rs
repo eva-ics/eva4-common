@@ -184,7 +184,7 @@ mod time_impl {
         fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
             let us =
                 i64::try_from(self.timestamp_us()).expect("timestamp too large") - J2000_EPOCH_US;
-            Encode::<Postgres>::encode(&us, buf)
+            Encode::<Postgres>::encode(us, buf)
         }
 
         fn size_hint(&self) -> usize {
