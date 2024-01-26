@@ -174,6 +174,10 @@ impl Time {
         self.sec as f64 + self.nsec as f64 / 1_000_000_000.0
     }
     #[inline]
+    pub fn timestamp_sec(&self) -> u64 {
+        self.sec
+    }
+    #[inline]
     pub fn timestamp_ns(&self) -> u64 {
         self.sec * 1_000_000_000 + self.nsec
     }
