@@ -28,7 +28,11 @@ pub struct Time {
 impl FromStr for Time {
     type Err = Error;
     fn from_str(s: &str) -> EResult<Self> {
-        Ok(dateparser::parse(s).map_err(Error::invalid_data)?.into())
+        if let Ok(v) = s.parse::<f64>() {
+            Ok(v.into())
+        } else {
+            Ok(dateparser::parse(s).map_err(Error::invalid_data)?.into())
+        }
     }
 }
 
