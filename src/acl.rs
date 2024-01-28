@@ -264,6 +264,19 @@ impl<'de> Deserialize<'de> for OIDMaskList {
     }
 }
 
+impl FromIterator<OIDMask> for OIDMaskList {
+    fn from_iter<I>(masks: I) -> Self
+    where
+        I: IntoIterator<Item = OIDMask>,
+    {
+        let mut s: HashSet<OIDMask> = HashSet::new();
+        for mask in masks {
+            s.insert(mask);
+        }
+        Self::new(s)
+    }
+}
+
 impl OIDMaskList {
     #[inline]
     pub fn new(oid_masks: HashSet<OIDMask>) -> Self {
@@ -318,6 +331,18 @@ impl OIDMaskList {
     #[inline]
     pub fn as_string_vec(&self) -> Vec<String> {
         self.oid_masks.iter().map(ToString::to_string).collect()
+    }
+    pub fn try_from_iter<I, T>(values: I) -> EResult<Self>
+    where
+        I: IntoIterator<Item = T>,
+        T: TryInto<OIDMask, Error = Error>,
+    {
+        let mut res = HashSet::new();
+        for v in values {
+            let mask: OIDMask = v.try_into()?;
+            res.insert(mask);
+        }
+        Ok(Self::new(res))
     }
 }
 
@@ -481,6 +506,12 @@ impl fmt::Display for OIDMask {
     }
 }
 
+impl From<Vec<OIDMask>> for OIDMaskList {
+    fn from(v: Vec<OIDMask>) -> Self {
+        Self::from_iter(v)
+    }
+}
+
 impl From<OID> for OIDMask {
     fn from(oid: OID) -> Self {
         OIDMask {
@@ -506,6 +537,21 @@ impl FromStr for OIDMask {
         Self::parse_oid_mask(s, ':')
     }
 }
+
+macro_rules! impl_oidmask_from_str {
+    ($t: ty) => {
+        impl TryFrom<$t> for OIDMask {
+            type Error = Error;
+            fn try_from(s: $t) -> EResult<Self> {
+                s.parse()
+            }
+        }
+    };
+}
+
+impl_oidmask_from_str!(String);
+impl_oidmask_from_str!(&str);
+impl_oidmask_from_str!(&&str);
 
 impl Hash for OIDMask {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
@@ -555,22 +601,7 @@ impl From<OIDMask> for OIDMaskList {
 impl TryFrom<Value> for OIDMaskList {
     type Error = Error;
     fn try_from(value: Value) -> EResult<OIDMaskList> {
-        match value {
-            Value::Seq(_) => {
-                let masks: Vec<String> = value.deserialize_into()?;
-                Ok(OIDMaskList::from_string_list(&masks)?)
-            }
-            Value::String(s) => {
-                if s.is_empty() {
-                    Ok(<_>::default())
-                } else {
-                    Ok(OIDMaskList::from_str_list(
-                        &s.split(',').collect::<Vec<_>>(),
-                    )?)
-                }
-            }
-            _ => Err(Error::invalid_data("Expected vec or string")),
-        }
+        OIDMaskList::deserialize(value).map_err(Into::into)
     }
 }
 
