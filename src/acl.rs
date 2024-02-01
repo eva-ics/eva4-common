@@ -601,7 +601,22 @@ impl From<OIDMask> for OIDMaskList {
 impl TryFrom<Value> for OIDMaskList {
     type Error = Error;
     fn try_from(value: Value) -> EResult<OIDMaskList> {
-        OIDMaskList::deserialize(value).map_err(Into::into)
+        match value {
+            Value::Seq(_) => {
+                let masks: Vec<String> = value.deserialize_into()?;
+                Ok(OIDMaskList::from_string_list(&masks)?)
+            }
+            Value::String(s) => {
+                if s.is_empty() {
+                    Ok(<_>::default())
+                } else {
+                    Ok(OIDMaskList::from_str_list(
+                        &s.split(',').collect::<Vec<_>>(),
+                    )?)
+                }
+            }
+            _ => Err(Error::invalid_data("Expected vec or string")),
+        }
     }
 }
 
