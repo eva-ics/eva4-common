@@ -2,7 +2,7 @@ use crate::value::to_value;
 use crate::{is_str_any, is_str_wildcard, EResult, Error, ItemKind, Value, OID};
 use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
-use std::collections::HashSet;
+use std::collections::{hash_set, HashSet};
 use std::convert::TryFrom;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -329,6 +329,10 @@ impl OIDMaskList {
         &self.oid_masks
     }
     #[inline]
+    pub fn oid_masks_mut(&mut self) -> &mut HashSet<OIDMask> {
+        &mut self.oid_masks
+    }
+    #[inline]
     pub fn as_string_vec(&self) -> Vec<String> {
         self.oid_masks.iter().map(ToString::to_string).collect()
     }
@@ -343,6 +347,24 @@ impl OIDMaskList {
             res.insert(mask);
         }
         Ok(Self::new(res))
+    }
+}
+
+impl<'a> IntoIterator for &'a OIDMaskList {
+    type Item = &'a OIDMask;
+    type IntoIter = hash_set::Iter<'a, OIDMask>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.oid_masks.iter()
+    }
+}
+
+impl IntoIterator for OIDMaskList {
+    type Item = OIDMask;
+    type IntoIter = hash_set::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.oid_masks.into_iter()
     }
 }
 
