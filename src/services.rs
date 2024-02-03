@@ -2,6 +2,8 @@ use crate::registry;
 use crate::Value;
 use crate::{EResult, Error};
 use busrt::rpc::{self, RpcClient, RpcHandlers};
+#[cfg(feature = "openssl3")]
+use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -17,6 +19,9 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
+#[cfg(feature = "openssl3")]
+static FIPS_LOADED: OnceCell<()> = OnceCell::new();
+
 #[cfg(any(feature = "openssl-no-fips", feature = "openssl-vendored"))]
 pub fn enable_fips() -> EResult<()> {
     Err(Error::failed(
@@ -27,7 +32,12 @@ pub fn enable_fips() -> EResult<()> {
 #[cfg(not(any(feature = "openssl-no-fips", feature = "openssl-vendored")))]
 pub fn enable_fips() -> EResult<()> {
     #[cfg(feature = "openssl3")]
-    std::mem::forget(openssl::provider::Provider::load(None, "fips")?);
+    {
+        FIPS_LOADED
+            .set(())
+            .map_err(|_| Error::core("FIPS provided already loaded"))?;
+        std::mem::forget(openssl::provider::Provider::load(None, "fips")?);
+    }
     #[cfg(not(feature = "openssl3"))]
     openssl::fips::enable(true)?;
     Ok(())

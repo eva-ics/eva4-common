@@ -48,7 +48,7 @@ hyper-static = { version = "0.1.5", optional = true }
 submap = { version = "0.2.3", optional = true }
 once_cell = { version = "1.13.1", optional = true }
 dateparser = { version = "0.1.7", optional = true }
-openssl = { version = "0.10.62", optional = true }
+openssl = { version = "0.10.63", optional = true }
 axum = { version = "0.6.12", default_features=false, features=[], optional = true }
 true = { version = "0.1.0", optional = true }
 parking_lot = { version = "0.12.1", optional = true }
@@ -83,4 +83,4 @@ hyper-tools = ["hyper", "hyper-static"]
 full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers", "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload", "logic", "logger", "axum", "serde-keyvalue", "chrono"]
 skip_self_test_serde = []
 openssl-no-fips  = []
-openssl3 = []
+openssl3 = ["once_cell"]
