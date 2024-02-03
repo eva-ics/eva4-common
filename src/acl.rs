@@ -60,6 +60,12 @@ impl PathMask {
     }
 }
 
+impl AsRef<PathMask> for PathMask {
+    fn as_ref(&self) -> &PathMask {
+        self
+    }
+}
+
 impl<'de> Deserialize<'de> for PathMask {
     fn deserialize<D>(deserializer: D) -> Result<PathMask, D::Error>
     where
@@ -175,6 +181,12 @@ impl PathMaskList {
     }
     pub fn is_empty(&self) -> bool {
         self.acl_map.is_empty()
+    }
+}
+
+impl AsRef<PathMaskList> for PathMaskList {
+    fn as_ref(&self) -> &PathMaskList {
+        self
     }
 }
 
@@ -368,6 +380,12 @@ impl IntoIterator for OIDMaskList {
     }
 }
 
+impl AsRef<OIDMaskList> for OIDMaskList {
+    fn as_ref(&self) -> &OIDMaskList {
+        self
+    }
+}
+
 #[derive(Debug, Clone, Eq)]
 pub struct OIDMask {
     kind: Option<ItemKind>,
@@ -550,6 +568,18 @@ impl From<OID> for OIDMaskList {
             path: oid.full_id().parse().unwrap(),
         };
         mask.into()
+    }
+}
+
+impl AsRef<OIDMask> for OIDMask {
+    fn as_ref(&self) -> &OIDMask {
+        self
+    }
+}
+
+impl AsRef<PathMask> for OIDMask {
+    fn as_ref(&self) -> &PathMask {
+        &self.path
     }
 }
 

@@ -846,6 +846,18 @@ impl OID {
     }
 }
 
+impl AsRef<str> for OID {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl AsRef<OID> for OID {
+    fn as_ref(&self) -> &OID {
+        self
+    }
+}
+
 impl FromStr for OID {
     type Err = Error;
     #[inline]
