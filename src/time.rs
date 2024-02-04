@@ -184,14 +184,14 @@ impl Time {
     pub fn from_timestamp_us(timestamp_us: u64) -> Self {
         Self {
             sec: timestamp_us / 1_000_000,
-            nsec: timestamp_us % 1_000_000,
+            nsec: timestamp_us % 1_000_000 * 1_000,
         }
     }
     #[inline]
     pub fn from_timestamp_ms(timestamp_ms: u64) -> Self {
         Self {
             sec: timestamp_ms / 1_000,
-            nsec: timestamp_ms % 1_000,
+            nsec: timestamp_ms % 1_000 * 1_000_000,
         }
     }
     #[allow(clippy::cast_sign_loss)]
@@ -503,5 +503,17 @@ mod tests {
         assert_eq!(time.timestamp(), 1632093707.123456789);
         assert_eq!(time.timestamp_ms(), timestamp_ns / 1_000_000);
         assert_eq!(time.timestamp_us(), timestamp_ns / 1_000);
+        let timestamp_us = 1632093707123456;
+        let time = Time::from_timestamp_us(timestamp_us);
+        assert_eq!(time.timestamp(), 1632093707.123456);
+        assert_eq!(time.timestamp_ms(), timestamp_us / 1_000);
+        assert_eq!(time.timestamp_us(), timestamp_us);
+        assert_eq!(time.timestamp_ns(), timestamp_us * 1_000);
+        let timestamp_ms = 1632093707123;
+        let time = Time::from_timestamp_ms(timestamp_ms);
+        assert_eq!(time.timestamp(), 1632093707.123);
+        assert_eq!(time.timestamp_ms(), timestamp_ms);
+        assert_eq!(time.timestamp_us(), timestamp_ms * 1_000);
+        assert_eq!(time.timestamp_ns(), timestamp_ms * 1_000_000);
     }
 }
