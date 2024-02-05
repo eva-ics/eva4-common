@@ -59,7 +59,9 @@ where
         .call(
             SERVICE_NAME,
             method,
-            pack(&payload).log_err()?.into(),
+            pack(&payload)
+                .log_err_with("unable to pack registry call payload")?
+                .into(),
             QoS::Processed,
         )
         .await

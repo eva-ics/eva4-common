@@ -73,35 +73,69 @@ macro_rules! err_logger {
             fn log_err(self) -> Self;
             /// log error as debug and keep the result
             fn log_ed(self) -> Self;
+            /// log error and forget the result with message
+            fn log_ef_with(self, msg: impl ::std::fmt::Display);
+            /// log error as debug and forget the result with message
+            fn log_efd_with(self, msg: impl ::std::fmt::Display);
+            /// log error and keep the result with message
+            fn log_err_with(self, msg: impl ::std::fmt::Display) -> Self;
+            /// log error as debug and keep the result with message
+            fn log_ed_with(self, msg: impl ::std::fmt::Display) -> Self;
         }
 
         impl<R, E> ErrLogger for Result<R, E>
         where
-            E: std::fmt::Display,
+            E: ::std::fmt::Display,
         {
             #[inline]
             fn log_ef(self) {
                 if let Err(ref e) = self {
-                    log::error!("{}", e);
+                    ::log::error!("{}", e);
                 }
             }
             #[inline]
             fn log_efd(self) {
                 if let Err(ref e) = self {
-                    log::debug!("{}", e);
+                    ::log::debug!("{}", e);
                 }
             }
             #[inline]
             fn log_err(self) -> Self {
                 if let Err(ref e) = self {
-                    log::error!("{}", e);
+                    ::log::error!("{}", e);
                 }
                 self
             }
             #[inline]
             fn log_ed(self) -> Self {
                 if let Err(ref e) = self {
-                    log::debug!("{}", e);
+                    ::log::debug!("{}", e);
+                }
+                self
+            }
+            #[inline]
+            fn log_ef_with(self, msg: impl ::std::fmt::Display) {
+                if let Err(ref e) = self {
+                    ::log::error!("{}: {}", msg, e);
+                }
+            }
+            #[inline]
+            fn log_efd_with(self, msg: impl ::std::fmt::Display) {
+                if let Err(ref e) = self {
+                    ::log::debug!("{}: {}", msg, e);
+                }
+            }
+            #[inline]
+            fn log_err_with(self, msg: impl ::std::fmt::Display) -> Self {
+                if let Err(ref e) = self {
+                    ::log::error!("{}: {}", msg, e);
+                }
+                self
+            }
+            #[inline]
+            fn log_ed_with(self, msg: impl ::std::fmt::Display) -> Self {
+                if let Err(ref e) = self {
+                    ::log::debug!("{}: {}", msg, e);
                 }
                 self
             }
