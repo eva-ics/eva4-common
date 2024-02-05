@@ -595,6 +595,10 @@ impl IEID {
         Self(b, i)
     }
     #[inline]
+    pub fn boot_id(&self) -> u64 {
+        self.0
+    }
+    #[inline]
     pub fn is_phantom(&self) -> bool {
         self.0 == 0
     }
