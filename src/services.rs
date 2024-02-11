@@ -428,6 +428,7 @@ impl Initial {
     pub fn set_fail_mode(&self, mode: bool) {
         self.fail_mode.store(mode, atomic::Ordering::SeqCst);
     }
+    #[cfg(not(target = "windows"))]
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
         if let Some(ref user) = self.user {
@@ -487,6 +488,7 @@ impl Initial {
     }
 }
 
+#[cfg(not(target = "windows"))]
 pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     let u = nix::unistd::User::from_name(user)
         .map_err(|e| Error::failed(format!("failed to get the system user {}: {}", user, e)))?
@@ -494,6 +496,7 @@ pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     Ok(u)
 }
 
+#[cfg(not(target = "windows"))]
 pub fn get_system_group(group: &str) -> EResult<nix::unistd::Group> {
     let g = nix::unistd::Group::from_name(group)
         .map_err(|e| Error::failed(format!("failed to get the system group {}: {}", group, e)))?
