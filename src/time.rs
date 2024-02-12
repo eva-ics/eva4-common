@@ -156,9 +156,9 @@ impl Time {
     ///
     /// Will panic if the system real-time clock is not available
     /// Will panic on Windows if the clock is set before 1.1.1970
-    #[inline]
     #[allow(clippy::cast_sign_loss)]
     #[cfg(not(target_os = "windows"))]
+    #[inline]
     pub fn now() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME).unwrap();
         Self {
@@ -167,6 +167,7 @@ impl Time {
         }
     }
     #[cfg(target_os = "windows")]
+    #[inline]
     pub fn now() -> Self {
         let t = SystemTime::now();
         t.try_into().unwrap()
@@ -186,8 +187,8 @@ impl Time {
             nsec: t.tv_nsec() as u64,
         }
     }
-    #[inline]
     #[cfg(target_os = "windows")]
+    #[inline]
     pub fn now_monotonic() -> Self {
         STARTED_AT.elapsed().into()
     }
