@@ -427,51 +427,53 @@ mod convert_chrono {
     }
 }
 
+/// Get monotonic time in seconds
+///
 /// # Panics
 ///
 /// Will panic if the monotonic clock is not available
-#[allow(clippy::cast_sign_loss)]
+#[inline]
 pub fn monotonic() -> u64 {
-    nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC)
-        .unwrap()
-        .tv_sec() as u64
+    Time::now_monotonic().timestamp_sec()
 }
 
+/// Get monotonic time in nanoseconds
+///
 /// # Panics
 ///
 /// Will panic if the monotonic clock is not available
-#[allow(clippy::cast_sign_loss)]
+#[inline]
 pub fn monotonic_ns() -> u64 {
-    let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC).unwrap();
-    t.tv_sec() as u64 * 1_000_000_000 + t.tv_nsec() as u64
+    Time::now_monotonic().timestamp_ns()
 }
 
+/// Get current UNIX timestamp in seconds
+///
 /// # Panics
 ///
 /// Will panic if the system clock is not available
 #[allow(clippy::cast_sign_loss)]
 pub fn now() -> u64 {
-    nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME)
-        .unwrap()
-        .tv_sec() as u64
+    Time::now().timestamp_sec()
 }
 
+/// Get current UNIX timestamp in seconds as a float
+///
 /// # Panics
 ///
 /// Will panic if the system clock is not available
-#[allow(clippy::cast_precision_loss)]
 #[inline]
 pub fn now_ns_float() -> f64 {
     Time::now().timestamp()
 }
 
+/// Get current UNIX timestamp in nanoseconds
+///
 /// # Panics
 ///
 /// Will panic if the system clock is not available
-#[allow(clippy::cast_sign_loss)]
 pub fn now_ns() -> u64 {
-    let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME).unwrap();
-    t.tv_sec() as u64 * 1_000_000_000 + t.tv_nsec() as u64
+    Time::now().timestamp_ns()
 }
 
 /// Convert f64 timestamp to nanoseconds
