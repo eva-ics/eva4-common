@@ -5,6 +5,9 @@ use std::str::FromStr;
 use std::time::{Duration, Instant};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[cfg(target_os = "windows")]
+static STARTED_AT: once_cell::sync::Lazy<Instant> = once_cell::sync::Lazy::new(|| Instant::now());
+
 pub fn serialize_time_now<S>(_value: &(), serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -152,8 +155,10 @@ impl Time {
     /// # Panics
     ///
     /// Will panic if the system real-time clock is not available
+    /// Will panic on Windows if the clock is set before 1.1.1970
     #[inline]
     #[allow(clippy::cast_sign_loss)]
+    #[cfg(not(target_os = "windows"))]
     pub fn now() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME).unwrap();
         Self {
@@ -161,17 +166,30 @@ impl Time {
             nsec: t.tv_nsec() as u64,
         }
     }
+    #[cfg(target_os = "windows")]
+    pub fn now() -> Self {
+        let t = SystemTime::now();
+        t.try_into().unwrap()
+    }
+    /// On Windows returns time since the first access
+    ///
     /// # Panics
     ///
     /// Will panic if the system monotonic clock is not available
     #[inline]
     #[allow(clippy::cast_sign_loss)]
+    #[cfg(not(target_os = "windows"))]
     pub fn now_monotonic() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC).unwrap();
         Self {
             sec: t.tv_sec() as u64,
             nsec: t.tv_nsec() as u64,
         }
+    }
+    #[inline]
+    #[cfg(target_os = "windows")]
+    pub fn now_monotonic() -> Self {
+        STARTED_AT.elapsed().into()
     }
     #[inline]
     pub fn from_timestamp_ns(timestamp_ns: u64) -> Self {
