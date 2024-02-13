@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "nostd", no_std)]
+//#![cfg_attr(feature = "nostd", no_std)]
 
 #[cfg(feature = "ext")]
 #[macro_use]
