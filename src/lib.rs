@@ -51,6 +51,8 @@ pub mod actions;
 pub mod cache;
 #[cfg(feature = "common-payloads")]
 pub mod common_payloads;
+#[cfg(feature = "console-logger")]
+pub mod console_logger;
 #[cfg(feature = "db")]
 pub mod db;
 #[cfg(any(feature = "events", feature = "common-payloads", feature = "logger"))]
