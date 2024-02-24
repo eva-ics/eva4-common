@@ -86,18 +86,14 @@ impl<'de> serde::de::Visitor<'de> for TimeVisitor {
     where
         E: serde::de::Error,
     {
-        value
-            .try_into()
-            .map_err(|_| serde::de::Error::custom("invalid time value"))
+        Ok(value.into())
     }
 
     fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        value
-            .try_into()
-            .map_err(|_| serde::de::Error::custom("invalid time value"))
+        Ok(value.into())
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
@@ -407,7 +403,7 @@ mod convert_chrono {
         fn from(datetime: NaiveDateTime) -> Self {
             Time {
                 sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
-                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+                nsec: u64::from(datetime.timestamp_subsec_nanos()),
             }
         }
     }
@@ -416,7 +412,7 @@ mod convert_chrono {
         fn from(datetime: DateTime<Utc>) -> Self {
             Time {
                 sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
-                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+                nsec: u64::from(datetime.timestamp_subsec_nanos()),
             }
         }
     }
@@ -425,7 +421,7 @@ mod convert_chrono {
         fn from(datetime: DateTime<Local>) -> Self {
             Time {
                 sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
-                nsec: u64::try_from(datetime.timestamp_subsec_nanos()).unwrap_or_default(),
+                nsec: u64::from(datetime.timestamp_subsec_nanos()),
             }
         }
     }

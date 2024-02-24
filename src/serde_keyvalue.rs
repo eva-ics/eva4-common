@@ -133,7 +133,7 @@ fn any_separator(s: &str) -> IResult<&str, Option<char>> {
 /// Nom parser for valid strings.
 ///
 /// A string can be quoted (using single or double quotes) or not. If it is not quoted, the string
-/// is assumed to continue until the next ",", "[", or "]" character. If it is escaped, it continues
+/// is assumed to continue until the next comma, [, or ] character. If it is escaped, it continues
 /// until the next non-escaped quote.
 ///
 /// The returned value is a slice into the current input if no characters to unescape were met,
@@ -159,7 +159,7 @@ fn any_string(s: &str) -> IResult<&str, Cow<str>> {
 
     // Single-quoted strings do not escape characters.
     let single_quoted = map(
-        delimited(char('\''), alt((is_not(r#"'"#), tag(""))), char('\'')),
+        delimited(char('\''), alt((is_not(r"'"), tag(""))), char('\'')),
         Cow::Borrowed,
     );
 

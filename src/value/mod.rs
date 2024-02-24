@@ -569,8 +569,8 @@ impl Value {
                 Ok(if tf_past { now - v } else { now + v })
             } else {
                 let d = dateparser::parse(s).map_err(Error::invalid_data)?;
-                let timestamp = d.timestamp() as f64
-                    + f64::try_from(d.timestamp_subsec_nanos())? / 1_000_000_000.0;
+                let timestamp =
+                    d.timestamp() as f64 + f64::from(d.timestamp_subsec_nanos()) / 1_000_000_000.0;
                 Ok(timestamp)
             }
         } else {

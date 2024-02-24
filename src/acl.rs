@@ -360,6 +360,9 @@ impl OIDMaskList {
         }
         Ok(Self::new(res))
     }
+    pub fn iter(&self) -> hash_set::Iter<'_, OIDMask> {
+        <&Self as IntoIterator>::into_iter(self)
+    }
 }
 
 impl<'a> IntoIterator for &'a OIDMaskList {
