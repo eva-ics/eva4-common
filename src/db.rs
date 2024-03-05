@@ -42,6 +42,17 @@ impl Type<Postgres> for OID {
     }
 }
 
+impl postgres::PgHasArrayType for OID {
+    fn array_type_info() -> postgres::PgTypeInfo {
+        postgres::PgTypeInfo::with_name("TEXT_ARRAY")
+    }
+
+    fn array_compatible(ty: &postgres::PgTypeInfo) -> bool {
+        *ty == postgres::PgTypeInfo::with_name("TEXT_ARRAY")
+            || *ty == postgres::PgTypeInfo::with_name("VARCHAR_ARRAY")
+    }
+}
+
 impl<'r, DB: Database> Decode<'r, DB> for OID
 where
     &'r str: Decode<'r, DB>,
