@@ -44,12 +44,12 @@ impl Type<Postgres> for OID {
 
 impl postgres::PgHasArrayType for OID {
     fn array_type_info() -> postgres::PgTypeInfo {
-        postgres::PgTypeInfo::with_name("TEXT_ARRAY")
+        postgres::PgTypeInfo::with_name("_TEXT")
     }
 
     fn array_compatible(ty: &postgres::PgTypeInfo) -> bool {
-        *ty == postgres::PgTypeInfo::with_name("TEXT_ARRAY")
-            || *ty == postgres::PgTypeInfo::with_name("VARCHAR_ARRAY")
+        *ty == postgres::PgTypeInfo::with_name("_TEXT")
+            || *ty == postgres::PgTypeInfo::with_name("_VARCHAR")
     }
 }
 
