@@ -379,8 +379,7 @@ mod convert_chrono {
         type Error = Error;
         #[inline]
         fn try_from(t: Time) -> EResult<Self> {
-            NaiveDateTime::from_timestamp_opt(i64::try_from(t.sec)?, u32::try_from(t.nsec)?)
-                .ok_or_else(|| Error::invalid_data("unable to convert timestamp"))
+            Ok(DateTime::from_timestamp(i64::try_from(t.sec)?, u32::try_from(t.nsec)?))
         }
     }
     impl TryFrom<Time> for DateTime<Utc> {
@@ -402,7 +401,7 @@ mod convert_chrono {
     impl From<NaiveDateTime> for Time {
         fn from(datetime: NaiveDateTime) -> Self {
             Time {
-                sec: u64::try_from(datetime.timestamp()).unwrap_or_default(),
+                sec: u64::try_from(datetime.and_utc().timestamp()).unwrap_or_default(),
                 nsec: u64::from(datetime.timestamp_subsec_nanos()),
             }
         }
