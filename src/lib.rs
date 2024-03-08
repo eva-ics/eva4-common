@@ -1080,11 +1080,11 @@ mod tests {
         assert_eq!(oid.full_id(), "env/room1/temp1");
         assert_eq!(oid.group().unwrap(), "env/room1");
         assert_eq!(oid.kind, ItemKind::Sensor);
-        assert_eq!("sensorx:env/temp1".parse::<OID>().is_err(), true);
-        assert_eq!("sensorxenv/temp1".parse::<OID>().is_err(), true);
-        assert_eq!("sensorxenv/:temp1".parse::<OID>().is_err(), true);
-        assert_eq!("sensor|temp1".parse::<OID>().is_err(), true);
-        assert_eq!("sensor:".parse::<OID>().is_err(), true);
+        assert!("sensorx:env/temp1".parse::<OID>().is_err());
+        assert!("sensorxenv/temp1".parse::<OID>().is_err());
+        assert!("sensorxenv/:temp1".parse::<OID>().is_err());
+        assert!("sensor|temp1".parse::<OID>().is_err());
+        assert!("sensor:".parse::<OID>().is_err());
         let oid = OID::new0(ItemKind::Sensor, "tests/test1").unwrap();
         assert_eq!(oid.id(), "test1");
         assert_eq!(oid.group().unwrap(), "tests");
@@ -1097,11 +1097,11 @@ mod tests {
 
     #[test]
     fn test_ieid() {
-        assert_eq!(IEID::new(1, 1) == IEID::new(1, 1), true);
-        assert_eq!(IEID::new(2, 1) > IEID::new(1, 9), true);
-        assert_eq!(IEID::new(2, 2) < IEID::new(3, 1), true);
-        assert_eq!(IEID::new(2, 4) > IEID::new(2, 2), true);
-        assert_eq!(IEID::new(2, 4) < IEID::new(2, 5), true);
+        assert!(IEID::new(1, 1) == IEID::new(1, 1));
+        assert!(IEID::new(2, 1) > IEID::new(1, 9));
+        assert!(IEID::new(2, 2) < IEID::new(3, 1));
+        assert!(IEID::new(2, 4) > IEID::new(2, 2));
+        assert!(IEID::new(2, 4) < IEID::new(2, 5));
     }
 
     #[test]
@@ -1117,17 +1117,11 @@ mod tests {
 
     #[test]
     fn test_try_into_bool() {
-        assert_eq!(
-            TryInto::<bool>::try_into(Value::String("True".to_owned())).unwrap(),
-            true
-        );
-        assert_eq!(
-            TryInto::<bool>::try_into(Value::String("Trux".to_owned())).is_err(),
-            true
-        );
-        assert_eq!(TryInto::<bool>::try_into(Value::U64(0)).unwrap(), false);
-        assert_eq!(TryInto::<bool>::try_into(Value::F64(1.0)).unwrap(), true);
-        assert_eq!(TryInto::<bool>::try_into(Value::F64(2.0)).is_err(), true);
+        assert!(TryInto::<bool>::try_into(Value::String("True".to_owned())).unwrap());
+        assert!(TryInto::<bool>::try_into(Value::String("Trux".to_owned())).is_err());
+        assert!(!TryInto::<bool>::try_into(Value::U64(0)).unwrap());
+        assert!(TryInto::<bool>::try_into(Value::F64(1.0)).unwrap());
+        assert!(TryInto::<bool>::try_into(Value::F64(2.0)).is_err());
     }
 
     #[test]
