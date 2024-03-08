@@ -992,10 +992,10 @@ mod tests {
         // Parsing hex values
         let res: SingleStruct<usize> =
             from_key_values::<SingleStruct<usize>>("m=0x1234abcd").unwrap();
-        assert_eq!(res.m, 0x1234abcd);
+        assert_eq!(res.m, 0x1234_abcd);
         let res: SingleStruct<isize> =
             from_key_values::<SingleStruct<isize>>("m=-0x1234abcd").unwrap();
-        assert_eq!(res.m, -0x1234abcd);
+        assert_eq!(res.m, -0x1234_abcd);
 
         // Hex value outside range
         let res: ParseError = from_key_values::<SingleStruct<usize>>("m=0xg").unwrap_err();
@@ -1066,22 +1066,22 @@ mod tests {
         let kv = r#"m="John Doe""#;
         let res = from_key_values::<SingleStruct<String>>(kv).unwrap();
         assert_eq!(res.m, "John Doe".to_string());
-        let kv = r#"m='John Doe'"#;
+        let kv = r"m='John Doe'";
         let res = from_key_values::<SingleStruct<String>>(kv).unwrap();
         assert_eq!(res.m, "John Doe".to_string());
 
         // Empty quoted strings.
         let kv = r#"m="""#;
         let res = from_key_values::<SingleStruct<String>>(kv).unwrap();
-        assert_eq!(res.m, "".to_string());
-        let kv = r#"m=''"#;
+        assert_eq!(res.m, String::new());
+        let kv = r"m=''";
         let res = from_key_values::<SingleStruct<String>>(kv).unwrap();
-        assert_eq!(res.m, "".to_string());
+        assert_eq!(res.m, String::new());
 
         // "=", ",", "[", "]" and "'" in quote.
         let kv = r#"m="val = [10, 20, 'a']""#;
         let res = from_key_values::<SingleStruct<String>>(kv).unwrap();
-        assert_eq!(res.m, r#"val = [10, 20, 'a']"#.to_string());
+        assert_eq!(res.m, r"val = [10, 20, 'a']".to_string());
 
         // Quotes in unquoted strings are forbidden.
         let kv = r#"m=val="a""#;
@@ -1093,7 +1093,7 @@ mod tests {
                 pos: 6
             }
         );
-        let kv = r#"m=val='a'"#;
+        let kv = r"m=val='a'";
         let err = from_key_values::<SingleStruct<String>>(kv).unwrap_err();
         assert_eq!(
             err,
@@ -1104,7 +1104,7 @@ mod tests {
         );
 
         // Brackets in unquoted strings are forbidden.
-        let kv = r#"m=val=[a]"#;
+        let kv = r"m=val=[a]";
         let err = from_key_values::<SingleStruct<String>>(kv).unwrap_err();
         assert_eq!(
             err,
@@ -1386,7 +1386,7 @@ mod tests {
             TestStruct {
                 flat: FlatStruct {
                     a: 10,
-                    b: Default::default(),
+                    b: <_>::default(),
                 },
                 flag: Some(DefaultStruct { param: 24 })
             }
@@ -1400,7 +1400,7 @@ mod tests {
             TestStruct {
                 flat: FlatStruct {
                     a: 10,
-                    b: Default::default(),
+                    b: <_>::default(),
                 },
                 flag: None,
             }
@@ -1637,7 +1637,7 @@ mod tests {
 
         // Unquoted strings
         let res: TestStruct =
-            from_key_values(r#"strs=[singleword,camel_cased,kebab-cased]"#).unwrap();
+            from_key_values(r"strs=[singleword,camel_cased,kebab-cased]").unwrap();
         assert_eq!(
             res,
             TestStruct {

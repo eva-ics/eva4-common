@@ -332,7 +332,7 @@ mod test {
         let rs = r#"{ "range": null }"#;
         let rdes: TestR = serde_json::from_str(rs).unwrap();
         assert!(rdes.range.is_none());
-        let rs = r#"{}"#;
+        let rs = r"{}";
         let rdes: TestR = serde_json::from_str(rs).unwrap();
         assert!(rdes.range.is_none());
     }
@@ -351,7 +351,7 @@ mod test {
             min_eq: true,
             max_eq: false,
         };
-        let r2 = r.clone();
+        let r2 = r;
         assert_eq!(r, r2);
         assert!(r.matches(1.0));
         assert!(r.matches(0.0));

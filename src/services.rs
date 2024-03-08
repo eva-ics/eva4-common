@@ -20,6 +20,7 @@ pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
 #[cfg(feature = "openssl3")]
+#[allow(dead_code)]
 static FIPS_LOADED: OnceCell<()> = OnceCell::new();
 
 #[cfg(any(feature = "openssl-no-fips", feature = "openssl-vendored"))]

@@ -1,10 +1,10 @@
+use crate::Error;
 #[allow(unused_imports)]
-use crate::{EResult, Error};
 use serde::Deserialize;
 
 #[cfg(not(feature = "skip_self_test_serde"))]
 #[allow(clippy::unreadable_literal)]
-fn test_serde() -> EResult<()> {
+fn test_serde() -> crate::EResult<()> {
     #[derive(Deserialize)]
     struct Test {
         number: crate::value::Value,

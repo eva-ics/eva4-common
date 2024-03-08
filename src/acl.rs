@@ -893,7 +893,7 @@ mod tests {
         assert_eq!(s, mask.to_string());
         assert_eq!(mask.chunks, None);
         let s = "";
-        assert_eq!(s.parse::<PathMask>().is_err(), true);
+        assert!(s.parse::<PathMask>().is_err());
         let s = "data/#";
         let mask: PathMask = s.parse().unwrap();
         assert_eq!(s, mask.to_string());
@@ -920,9 +920,9 @@ mod tests {
         assert_eq!(mask.path.chunks, None);
         assert_eq!(mask.as_path(), "#");
         let s = "";
-        assert_eq!(s.parse::<OIDMask>().is_err(), true);
+        assert!(s.parse::<OIDMask>().is_err());
         let s = "sensor:";
-        assert_eq!(s.parse::<OIDMask>().is_err(), true);
+        assert!(s.parse::<OIDMask>().is_err());
         let s = "sensor:data/#";
         let mask: OIDMask = s.parse().unwrap();
         assert_eq!(mask.as_path(), "sensor/data/#");
@@ -930,7 +930,7 @@ mod tests {
         assert_eq!(mask.kind.unwrap(), ItemKind::Sensor);
         assert_eq!(mask.path.chunks.unwrap(), ["data", "#"]);
         let s = "#:data/#";
-        assert_eq!(s.parse::<OIDMask>().is_err(), true);
+        assert!(s.parse::<OIDMask>().is_err());
         let s = "+:data/tests/t1";
         let mask: OIDMask = s.parse().unwrap();
         assert_eq!(mask.as_path(), "+/data/tests/t1");
@@ -952,35 +952,35 @@ mod tests {
     fn test_path_mask_list() {
         let p =
             PathMaskList::from_str_list(&["test/tests", "+/xxx", "zzz/?/222", "abc", "a/b/#/c"]);
-        assert_eq!(p.matches("test"), false);
-        assert_eq!(p.matches("test/tests"), true);
-        assert_eq!(p.matches("test/tests2"), false);
-        assert_eq!(p.matches("aaa/xxx"), true);
-        assert_eq!(p.matches("aaa/xxx/123"), false);
-        assert_eq!(p.matches("zzz/xxx/222"), true);
-        assert_eq!(p.matches("zzz/xxx/222/555"), false);
-        assert_eq!(p.matches("zzz/xxx/223"), false);
-        assert_eq!(p.matches("abc"), true);
-        assert_eq!(p.matches("abd"), false);
-        assert_eq!(p.matches("abc/xxx"), true);
-        assert_eq!(p.matches("abc/zzz"), false);
-        assert_eq!(p.matches("a/b/zzz"), true);
-        assert_eq!(p.matches("a/b/zzz/xxx"), true);
+        assert!(!p.matches("test"));
+        assert!(p.matches("test/tests"));
+        assert!(!p.matches("test/tests2"));
+        assert!(p.matches("aaa/xxx"));
+        assert!(!p.matches("aaa/xxx/123"));
+        assert!(p.matches("zzz/xxx/222"));
+        assert!(!p.matches("zzz/xxx/222/555"));
+        assert!(!p.matches("zzz/xxx/223"));
+        assert!(p.matches("abc"));
+        assert!(!p.matches("abd"));
+        assert!(p.matches("abc/xxx"));
+        assert!(!p.matches("abc/zzz"));
+        assert!(p.matches("a/b/zzz"));
+        assert!(p.matches("a/b/zzz/xxx"));
         let p = PathMaskList::from_str_list(&["*"]);
-        assert_eq!(p.matches("test"), true);
-        assert_eq!(p.matches("test/tests"), true);
-        assert_eq!(p.matches("test/tests2"), true);
-        assert_eq!(p.matches("aaa/xxx"), true);
-        assert_eq!(p.matches("aaa/xxx/123"), true);
-        assert_eq!(p.matches("zzz/xxx/222"), true);
-        assert_eq!(p.matches("zzz/xxx/222/555"), true);
-        assert_eq!(p.matches("zzz/xxx/223"), true);
-        assert_eq!(p.matches("abc"), true);
-        assert_eq!(p.matches("abd"), true);
-        assert_eq!(p.matches("abc/xxx"), true);
-        assert_eq!(p.matches("abc/zzz"), true);
-        assert_eq!(p.matches("a/b/zzz"), true);
-        assert_eq!(p.matches("a/b/zzz/xxx"), true);
+        assert!(p.matches("test"));
+        assert!(p.matches("test/tests"));
+        assert!(p.matches("test/tests2"));
+        assert!(p.matches("aaa/xxx"));
+        assert!(p.matches("aaa/xxx/123"));
+        assert!(p.matches("zzz/xxx/222"));
+        assert!(p.matches("zzz/xxx/222/555"));
+        assert!(p.matches("zzz/xxx/223"));
+        assert!(p.matches("abc"));
+        assert!(p.matches("abd"));
+        assert!(p.matches("abc/xxx"));
+        assert!(p.matches("abc/zzz"));
+        assert!(p.matches("a/b/zzz"));
+        assert!(p.matches("a/b/zzz/xxx"));
     }
 
     #[test]
@@ -993,50 +993,50 @@ mod tests {
             "+:a/b/#/c",
         ])
         .unwrap();
-        assert_eq!(p.matches(&"unit:test".parse().unwrap()), false);
-        assert_eq!(p.matches(&"unit:test/tests".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:test/tests".parse().unwrap()), false);
-        assert_eq!(p.matches(&"unit:test/tests2".parse().unwrap()), false);
-        assert_eq!(p.matches(&"sensor:aaa/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"lvar:aaa/xxx".parse().unwrap()), false);
-        assert_eq!(p.matches(&"unit:zzz/xxx/222".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:zzz/xxx/222".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:zzz/xxx/222/555".parse().unwrap()), false);
-        assert_eq!(p.matches(&"unit:zzz/xxx/223".parse().unwrap()), false);
-        assert_eq!(p.matches(&"lvar:abc".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:abc".parse().unwrap()), false);
-        assert_eq!(p.matches(&"lvar:abd".parse().unwrap()), false);
-        assert_eq!(p.matches(&"lvar:abc/xxx".parse().unwrap()), false);
-        assert_eq!(p.matches(&"sensor:abc/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:abc/zzz".parse().unwrap()), false);
-        assert_eq!(p.matches(&"unit:a/b/zzz".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:a/b/zzz/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:a/c/zzz/xxx".parse().unwrap()), false);
+        assert!(!p.matches(&"unit:test".parse().unwrap()));
+        assert!(p.matches(&"unit:test/tests".parse().unwrap()));
+        assert!(!p.matches(&"sensor:test/tests".parse().unwrap()));
+        assert!(!p.matches(&"unit:test/tests2".parse().unwrap()));
+        assert!(p.matches(&"sensor:aaa/xxx".parse().unwrap()));
+        assert!(!p.matches(&"lvar:aaa/xxx".parse().unwrap()));
+        assert!(p.matches(&"unit:zzz/xxx/222".parse().unwrap()));
+        assert!(p.matches(&"sensor:zzz/xxx/222".parse().unwrap()));
+        assert!(!p.matches(&"sensor:zzz/xxx/222/555".parse().unwrap()));
+        assert!(!p.matches(&"unit:zzz/xxx/223".parse().unwrap()));
+        assert!(p.matches(&"lvar:abc".parse().unwrap()));
+        assert!(!p.matches(&"unit:abc".parse().unwrap()));
+        assert!(!p.matches(&"lvar:abd".parse().unwrap()));
+        assert!(!p.matches(&"lvar:abc/xxx".parse().unwrap()));
+        assert!(p.matches(&"sensor:abc/xxx".parse().unwrap()));
+        assert!(!p.matches(&"sensor:abc/zzz".parse().unwrap()));
+        assert!(p.matches(&"unit:a/b/zzz".parse().unwrap()));
+        assert!(p.matches(&"unit:a/b/zzz/xxx".parse().unwrap()));
+        assert!(!p.matches(&"unit:a/c/zzz/xxx".parse().unwrap()));
         let p = OIDMaskList::from_str_list(&["*"]).unwrap();
-        assert_eq!(p.matches(&"unit:test".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:test/tests".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:test/tests".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:test/tests2".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:aaa/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"lvar:aaa/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:zzz/xxx/222".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:zzz/xxx/222".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:zzz/xxx/222/555".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:zzz/xxx/223".parse().unwrap()), true);
-        assert_eq!(p.matches(&"lvar:abc".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:abc".parse().unwrap()), true);
-        assert_eq!(p.matches(&"lvar:abd".parse().unwrap()), true);
-        assert_eq!(p.matches(&"lvar:abc/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:abc/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"sensor:abc/zzz".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:a/b/zzz".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:a/b/zzz/xxx".parse().unwrap()), true);
-        assert_eq!(p.matches(&"unit:a/c/zzz/xxx".parse().unwrap()), true);
+        assert!(p.matches(&"unit:test".parse().unwrap()));
+        assert!(p.matches(&"unit:test/tests".parse().unwrap()));
+        assert!(p.matches(&"sensor:test/tests".parse().unwrap()));
+        assert!(p.matches(&"unit:test/tests2".parse().unwrap()));
+        assert!(p.matches(&"sensor:aaa/xxx".parse().unwrap()));
+        assert!(p.matches(&"lvar:aaa/xxx".parse().unwrap()));
+        assert!(p.matches(&"unit:zzz/xxx/222".parse().unwrap()));
+        assert!(p.matches(&"sensor:zzz/xxx/222".parse().unwrap()));
+        assert!(p.matches(&"sensor:zzz/xxx/222/555".parse().unwrap()));
+        assert!(p.matches(&"unit:zzz/xxx/223".parse().unwrap()));
+        assert!(p.matches(&"lvar:abc".parse().unwrap()));
+        assert!(p.matches(&"unit:abc".parse().unwrap()));
+        assert!(p.matches(&"lvar:abd".parse().unwrap()));
+        assert!(p.matches(&"lvar:abc/xxx".parse().unwrap()));
+        assert!(p.matches(&"sensor:abc/xxx".parse().unwrap()));
+        assert!(p.matches(&"sensor:abc/zzz".parse().unwrap()));
+        assert!(p.matches(&"unit:a/b/zzz".parse().unwrap()));
+        assert!(p.matches(&"unit:a/b/zzz/xxx".parse().unwrap()));
+        assert!(p.matches(&"unit:a/c/zzz/xxx".parse().unwrap()));
 
         let p = OIDMaskList::from_str_list(&["sensor:content/#"]).unwrap();
-        assert_eq!(p.matches(&"sensor:content/data".parse().unwrap()), true);
+        assert!(p.matches(&"sensor:content/data".parse().unwrap()));
         let p = OIDMaskList::from_str_list(&["sensor:+"]).unwrap();
-        assert_ne!(p.matches(&"sensor:content/data".parse().unwrap()), true);
+        assert!(!p.matches(&"sensor:content/data".parse().unwrap()));
     }
 
     #[test]
@@ -1067,14 +1067,13 @@ mod tests {
         acl.read.rpvt = p_allow;
         acl.deny_read.rpvt = p_deny;
         for pfx in &["", "http://", "https://"] {
-            assert_eq!(acl.check_rpvt_read(&format!("node1/{pfx}res")), true);
-            assert_eq!(acl.check_rpvt_read(&format!("node2/{pfx}res")), false);
-            assert_eq!(acl.check_rpvt_read(&format!("node2/{pfx}res/res1")), true);
-            assert_eq!(
-                acl.check_rpvt_read(&format!("node2/{pfx}res/secret")),
-                false
+            assert!(acl.check_rpvt_read(&format!("node1/{pfx}res")));
+            assert!(!acl.check_rpvt_read(&format!("node2/{pfx}res")));
+            assert!(acl.check_rpvt_read(&format!("node2/{pfx}res/res1")));
+            assert!(
+                !acl.check_rpvt_read(&format!("node2/{pfx}res/secret"))
             );
-            assert_eq!(acl.check_rpvt_read(&format!("node3/{pfx}res")), false);
+            assert!(!acl.check_rpvt_read(&format!("node3/{pfx}res")));
         }
     }
 }

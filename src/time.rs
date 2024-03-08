@@ -506,31 +506,32 @@ pub fn ts_from_ns(ts: u64) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::Time;
     #[test]
     fn test_time() {
-        let timestamp = 1632093707.1893349;
+        let timestamp = 1_632_093_707.189_334_9;
         let time = Time::from_timestamp(timestamp);
         assert_eq!(time.timestamp(), timestamp);
-        assert_eq!(time.timestamp_ns(), 1632093707189334869);
-        let timestamp_ns = 1632093707123456789;
-        let time = Time::from_timestamp_ns(timestamp_ns);
-        assert_eq!(time.timestamp_ns(), timestamp_ns);
-        assert_eq!(time.timestamp(), 1632093707.123456789);
-        assert_eq!(time.timestamp_ms(), timestamp_ns / 1_000_000);
-        assert_eq!(time.timestamp_us(), timestamp_ns / 1_000);
-        let timestamp_us = 1632093707123456;
-        let time = Time::from_timestamp_us(timestamp_us);
-        assert_eq!(time.timestamp(), 1632093707.123456);
-        assert_eq!(time.timestamp_ms(), timestamp_us / 1_000);
-        assert_eq!(time.timestamp_us(), timestamp_us);
-        assert_eq!(time.timestamp_ns(), timestamp_us * 1_000);
-        let timestamp_ms = 1632093707123;
-        let time = Time::from_timestamp_ms(timestamp_ms);
-        assert_eq!(time.timestamp(), 1632093707.123);
-        assert_eq!(time.timestamp_ms(), timestamp_ms);
-        assert_eq!(time.timestamp_us(), timestamp_ms * 1_000);
-        assert_eq!(time.timestamp_ns(), timestamp_ms * 1_000_000);
+        assert_eq!(time.timestamp_ns(), 1_632_093_707_189_334_869);
+        let timestamp_nanos = 1_632_093_707_123_456_789;
+        let time = Time::from_timestamp_ns(timestamp_nanos);
+        assert_eq!(time.timestamp_ns(), timestamp_nanos);
+        assert_eq!(time.timestamp(), 1_632_093_707.123_456_7);
+        assert_eq!(time.timestamp_ms(), timestamp_nanos / 1_000_000);
+        assert_eq!(time.timestamp_us(), timestamp_nanos / 1_000);
+        let timestamp_micros = 1_632_093_707_123_456;
+        let time = Time::from_timestamp_us(timestamp_micros);
+        assert_eq!(time.timestamp(), 1_632_093_707.123_456);
+        assert_eq!(time.timestamp_ms(), timestamp_micros / 1_000);
+        assert_eq!(time.timestamp_us(), timestamp_micros);
+        assert_eq!(time.timestamp_ns(), timestamp_micros * 1_000);
+        let timestamp_millis = 1_632_093_707_123;
+        let time = Time::from_timestamp_ms(timestamp_millis);
+        assert_eq!(time.timestamp(), 1_632_093_707.123);
+        assert_eq!(time.timestamp_ms(), timestamp_millis);
+        assert_eq!(time.timestamp_us(), timestamp_millis * 1_000);
+        assert_eq!(time.timestamp_ns(), timestamp_millis * 1_000_000);
     }
 }
