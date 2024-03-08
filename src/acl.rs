@@ -1070,9 +1070,7 @@ mod tests {
             assert!(acl.check_rpvt_read(&format!("node1/{pfx}res")));
             assert!(!acl.check_rpvt_read(&format!("node2/{pfx}res")));
             assert!(acl.check_rpvt_read(&format!("node2/{pfx}res/res1")));
-            assert!(
-                !acl.check_rpvt_read(&format!("node2/{pfx}res/secret"))
-            );
+            assert!(!acl.check_rpvt_read(&format!("node2/{pfx}res/secret")));
             assert!(!acl.check_rpvt_read(&format!("node3/{pfx}res")));
         }
     }
