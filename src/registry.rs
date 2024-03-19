@@ -18,6 +18,7 @@ pub const R_USER_DATA: &str = "user_data";
 pub const R_CONFIG: &str = "config";
 pub const R_DATA: &str = "data";
 pub const R_CACHE: &str = "cache";
+pub const R_DATA_OBJECT: &str = "dobj";
 
 // the below methods are pub as the core access the registry directly as db during startup
 #[inline]
