@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.45"
+version = "0.3.46"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -57,6 +57,7 @@ thiserror = { version = "1.0.51", optional = true }
 remain = { version = "0.2.11", optional = true }
 chrono = { version = "0.4.31", optional = true }
 env_logger = { version = "0.11.2", optional = true }
+binrw = { version = "0.13.3", optional = true }
 
 [features]
 nostd = []
@@ -82,8 +83,9 @@ common-payloads = ["uuid", "rand"]
 hyper-tools = ["hyper", "hyper-static"]
 full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers",
   "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
-  "logic", "logger", "axum", "serde-keyvalue", "chrono", "console-logger"]
+  "logic", "logger", "axum", "serde-keyvalue", "chrono", "console-logger", "data-objects"]
 skip_self_test_serde = []
 openssl-no-fips  = []
 openssl3 = ["once_cell"]
 console-logger = ["env_logger", "once_cell"]
+data-objects = ["binrw"]

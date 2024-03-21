@@ -55,6 +55,8 @@ pub mod common_payloads;
 pub mod console_logger;
 #[cfg(feature = "db")]
 pub mod db;
+#[cfg(feature = "data-objects")]
+pub mod dobj;
 #[cfg(any(feature = "events", feature = "common-payloads", feature = "logger"))]
 pub mod events;
 #[cfg(feature = "ext")]
