@@ -253,17 +253,17 @@ pub struct DataObject {
     #[serde(alias = "i")]
     pub name: Name,
     #[serde(default, alias = "f")]
-    fields: Vec<Field>,
+    pub fields: Vec<Field>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Field {
     #[serde(alias = "i")]
-    name: Name,
+    pub name: Name,
     #[serde(rename = "type", alias = "t")]
-    kind: Kind,
+    pub kind: Kind,
     #[serde(skip_serializing_if = "Option::is_none")]
-    oid: Option<OID>,
+    pub oid: Option<OID>,
 }
 
 #[derive(Debug, Ord, PartialEq, Eq, PartialOrd, Clone)]
