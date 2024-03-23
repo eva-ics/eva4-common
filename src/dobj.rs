@@ -17,7 +17,7 @@ impl Borrow<str> for Name {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum Endianess {
     Big,
