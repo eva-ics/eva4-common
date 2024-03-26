@@ -132,6 +132,32 @@ impl ObjectMap {
             self.objects.insert(object.name.clone(), object);
         }
     }
+    pub fn mapped_oids(&self, name: &Name) -> BTreeSet<OID> {
+        let mut oids = BTreeSet::new();
+        self.mapped_oids_recursive(name, &mut oids);
+        oids
+    }
+    pub fn mapped_oids_recursive(&self, name: &Name, oids: &mut BTreeSet<OID>) {
+        let Some(object) = self.objects.get(name) else {
+            return;
+        };
+        for field in &object.fields {
+            if let Some(ref oid) = field.oid {
+                oids.insert(oid.clone());
+            }
+            match field.kind {
+                Kind::Array(_, ref k) => {
+                    if let Kind::DataObject(ref s) = k.as_ref() {
+                        self.mapped_oids_recursive(s, oids);
+                    }
+                }
+                Kind::DataObject(ref s) => {
+                    self.mapped_oids_recursive(s, oids);
+                }
+                _ => {}
+            }
+        }
+    }
     pub fn remove_bulk<B: Borrow<str> + Ord>(&mut self, names: &[B]) {
         for name in names {
             self.objects.remove(name.borrow());
