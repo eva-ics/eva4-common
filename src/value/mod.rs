@@ -42,6 +42,16 @@ impl From<ser::SerializerError> for Error {
 
 const ERR_INVALID_VALUE: &str = "Invalid value";
 
+macro_rules! float_from_bool {
+    ($v: expr) => {
+        if $v {
+            1.0
+        } else {
+            0.0
+        }
+    };
+}
+
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Serialize, Clone, Eq, PartialEq, Default)]
 #[serde(untagged)]
@@ -1150,7 +1160,7 @@ impl TryFrom<Value> for f32 {
 
     fn try_from(value: Value) -> EResult<f32> {
         match value {
-            Value::Bool(v) => Ok(f32::from(v)),
+            Value::Bool(v) => Ok(float_from_bool!(v)),
             Value::F32(v) => Ok(v),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, f32)),
             Value::U8(v) => Ok(f32::from(v)),
@@ -1172,7 +1182,7 @@ impl TryFrom<&Value> for f64 {
 
     fn try_from(value: &Value) -> EResult<f64> {
         match value {
-            Value::Bool(v) => Ok(f64::from(*v)),
+            Value::Bool(v) => Ok(float_from_bool!(*v)),
             Value::U8(v) => Ok(f64::from(*v)),
             Value::U16(v) => Ok(f64::from(*v)),
             Value::U32(v) => Ok(f64::from(*v)),
@@ -1194,7 +1204,7 @@ impl TryFrom<Value> for f64 {
 
     fn try_from(value: Value) -> EResult<f64> {
         match value {
-            Value::Bool(v) => Ok(f64::from(v)),
+            Value::Bool(v) => Ok(float_from_bool!(v)),
             Value::U8(v) => Ok(f64::from(v)),
             Value::U16(v) => Ok(f64::from(v)),
             Value::U32(v) => Ok(f64::from(v)),
