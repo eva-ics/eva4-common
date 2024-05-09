@@ -280,6 +280,7 @@ impl Initial {
             crate::LOG_LEVEL_DEBUG => log::LevelFilter::Debug,
             crate::LOG_LEVEL_WARN => log::LevelFilter::Warn,
             crate::LOG_LEVEL_ERROR => log::LevelFilter::Error,
+            crate::LOG_LEVEL_OFF => log::LevelFilter::Off,
             _ => log::LevelFilter::Info,
         }
     }
