@@ -8,6 +8,9 @@
 ///
 /// For Time (feature "time" enabled) type use INTEGER for Sqlite and TIMESTAMP/TIMESTAMPTZ for
 /// Postgres
+
+#[cfg(feature = "acl")]
+use crate::acl::OIDMask;
 use crate::{value::Value, EResult, Error, OID};
 use once_cell::sync::OnceCell;
 use sqlx::encode::IsNull;
@@ -89,6 +92,71 @@ impl Encode<'_, Postgres> for OID {
     }
     fn size_hint(&self) -> usize {
         self.as_str().len()
+    }
+}
+
+#[cfg(feature = "acl")]
+impl Type<Sqlite> for OIDMask {
+    fn type_info() -> sqlite::SqliteTypeInfo {
+        <str as Type<Sqlite>>::type_info()
+    }
+}
+
+#[cfg(feature = "acl")]
+impl Type<Postgres> for OIDMask {
+    fn type_info() -> postgres::PgTypeInfo {
+        <str as Type<Postgres>>::type_info()
+    }
+    fn compatible(ty: &postgres::PgTypeInfo) -> bool {
+        *ty == postgres::PgTypeInfo::with_name("VARCHAR")
+            || *ty == postgres::PgTypeInfo::with_name("TEXT")
+    }
+}
+
+#[cfg(feature = "acl")]
+impl postgres::PgHasArrayType for OIDMask {
+    fn array_type_info() -> postgres::PgTypeInfo {
+        postgres::PgTypeInfo::with_name("_TEXT")
+    }
+
+    fn array_compatible(ty: &postgres::PgTypeInfo) -> bool {
+        *ty == postgres::PgTypeInfo::with_name("_TEXT")
+            || *ty == postgres::PgTypeInfo::with_name("_VARCHAR")
+    }
+}
+
+#[cfg(feature = "acl")]
+impl<'r, DB: Database> Decode<'r, DB> for OIDMask
+where
+    &'r str: Decode<'r, DB>,
+{
+    fn decode(value: <DB as database::HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
+        let value = <&str as Decode<DB>>::decode(value)?;
+        value.parse().map_err(Into::into)
+    }
+}
+
+#[cfg(feature = "acl")]
+impl<'q> Encode<'q, Sqlite> for OIDMask {
+    fn encode(self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+        args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
+            self.to_string(),
+        )));
+
+        IsNull::No
+    }
+    fn encode_by_ref(&self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+        args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
+            self.to_string(),
+        )));
+        IsNull::No
+    }
+}
+
+#[cfg(feature = "acl")]
+impl Encode<'_, Postgres> for OIDMask {
+    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
+        <&str as Encode<Postgres>>::encode(&self.to_string(), buf)
     }
 }
 
