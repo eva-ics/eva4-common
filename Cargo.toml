@@ -63,7 +63,7 @@ binrw = { version = "0.13.3", optional = true }
 nostd = []
 #ext = ["payload", "log", "libloading", "lazy_static"]
 acl = ["submap"] # access control lists
-events = ["parking_lot"] # common events
+events = ["parking_lot", "acl"] # common events
 services = ["bus-rpc", "tokio", "registry", "nix", "openssl"] # service structures and tools
 actions = ["uuid"] # action structures and tools
 registry = ["busrt", "payload"]

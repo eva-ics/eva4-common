@@ -1,3 +1,4 @@
+use crate::acl::OIDMaskList;
 use crate::value::{Value, ValueOption, ValueOptionOwned};
 use crate::{EResult, Error};
 use crate::{ItemStatus, IEID, OID};
@@ -95,7 +96,7 @@ impl<'de> Deserialize<'de> for NodeStatus {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Default, Ord, PartialOrd)]
 pub enum Force {
     #[default]
     None,
@@ -105,6 +106,25 @@ pub enum Force {
     /// Full force behavior: does the same as Weak, but also updates the item state even if the the
     /// item is disabled
     Full,
+}
+
+impl Force {
+    #[inline]
+    pub fn is_none(&self) -> bool {
+        matches!(self, Force::None)
+    }
+    #[inline]
+    pub fn is_weak(&self) -> bool {
+        matches!(self, Force::Weak)
+    }
+    #[inline]
+    pub fn is_full(&self) -> bool {
+        matches!(self, Force::Full)
+    }
+    #[inline]
+    pub fn is_any(&self) -> bool {
+        !self.is_none()
+    }
 }
 
 impl Serialize for Force {
@@ -183,6 +203,30 @@ impl<'de> Deserialize<'de> for Force {
     }
 }
 
+/// On modified rules
+#[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+pub struct OnModified<'a> {
+    /// For the selected OID mask list
+    pub oid: &'a OIDMaskList,
+    /// The new status
+    pub status: ItemStatus,
+    /// The new value (optional)
+    #[serde(default, skip_serializing_if = "ValueOption::is_none")]
+    pub value: ValueOption<'a>,
+}
+
+/// On modified rules (owned)
+#[derive(Debug, Clone, Serialize, Eq, PartialEq, Deserialize)]
+pub struct OnModifiedOwned {
+    /// For the selected OID mask list
+    pub oid: OIDMaskList,
+    /// The new status
+    pub status: ItemStatus,
+    /// The new value (optional)
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value: ValueOptionOwned,
+}
+
 /// Submitted by services via the bus for local items
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -190,9 +234,24 @@ pub struct RawStateEvent<'a> {
     pub status: ItemStatus,
     #[serde(default, skip_serializing_if = "ValueOption::is_none")]
     pub value: ValueOption<'a>,
-    #[serde(default)]
-    // used to forcibly set e.g. lvar state, even if its status is 0
+    #[serde(default, skip_serializing_if = "Force::is_none")]
     pub force: Force,
+    /// Compare the status with the current status (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_compare: Option<ItemStatus>,
+    /// Compare the value with the current value (optional)
+    #[serde(skip_serializing_if = "ValueOption::is_none")]
+    pub value_compare: ValueOption<'a>,
+    /// if comparison is used and unequal, set item status. In case if status is not specified,
+    /// `crate::ITEM_STATUS_ERROR` is used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_else: Option<ItemStatus>,
+    /// if comparison is used and unequal, set item value (optional)
+    #[serde(default, skip_serializing_if = "ValueOption::is_none")]
+    pub value_else: ValueOption<'a>,
+    /// If the item is modified, OnModified rules are applied
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub on_modified: Option<OnModified<'a>>,
 }
 
 impl<'a> RawStateEvent<'a> {
@@ -202,6 +261,11 @@ impl<'a> RawStateEvent<'a> {
             status,
             value: ValueOption::Value(value),
             force: Force::None,
+            on_modified: None,
+            status_compare: None,
+            value_compare: ValueOption::No,
+            status_else: None,
+            value_else: ValueOption::No,
         }
     }
     #[inline]
@@ -210,6 +274,11 @@ impl<'a> RawStateEvent<'a> {
             status,
             value: ValueOption::No,
             force: Force::None,
+            on_modified: None,
+            status_compare: None,
+            value_compare: ValueOption::No,
+            status_else: None,
+            value_else: ValueOption::No,
         }
     }
     pub fn force(mut self) -> Self {
@@ -229,8 +298,24 @@ pub struct RawStateEventOwned {
     pub status: ItemStatus,
     #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
     pub value: ValueOptionOwned,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Force::is_none")]
     pub force: Force,
+    /// Compare the status with the current status (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_compare: Option<ItemStatus>,
+    /// Compare the value with the current value (optional)
+    #[serde(skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value_compare: ValueOptionOwned,
+    /// if comparison is used and unequal, set item status. In case if status is not specified,
+    /// `crate::ITEM_STATUS_ERROR` is used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_else: Option<ItemStatus>,
+    /// if comparison is used and unequal, set item value (optional)
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
+    pub value_else: ValueOptionOwned,
+    /// If the item is modified, OnModified rules are applied
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub on_modified: Option<OnModifiedOwned>,
 }
 
 impl RawStateEventOwned {
@@ -240,6 +325,11 @@ impl RawStateEventOwned {
             status,
             value: ValueOptionOwned::Value(value),
             force: Force::None,
+            status_compare: None,
+            value_compare: ValueOptionOwned::No,
+            status_else: None,
+            value_else: ValueOptionOwned::No,
+            on_modified: None,
         }
     }
     #[inline]
@@ -248,6 +338,11 @@ impl RawStateEventOwned {
             status,
             value: ValueOptionOwned::No,
             force: Force::None,
+            status_compare: None,
+            value_compare: ValueOptionOwned::No,
+            status_else: None,
+            value_else: ValueOptionOwned::No,
+            on_modified: None,
         }
     }
     pub fn force(mut self) -> Self {

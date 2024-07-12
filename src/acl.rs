@@ -253,6 +253,14 @@ pub struct OIDMaskList {
     acl_map: AclMap,
 }
 
+impl PartialEq for OIDMaskList {
+    fn eq(&self, other: &Self) -> bool {
+        self.oid_masks == other.oid_masks
+    }
+}
+
+impl Eq for OIDMaskList {}
+
 impl Serialize for OIDMaskList {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
