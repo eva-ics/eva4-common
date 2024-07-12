@@ -228,7 +228,7 @@ pub struct OnModifiedOwned {
 }
 
 /// Submitted by services via the bus for local items
-#[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Eq, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RawStateEvent<'a> {
     pub status: ItemStatus,
@@ -292,7 +292,7 @@ impl<'a> RawStateEvent<'a> {
 }
 
 /// Submitted by services via the bus for local items
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RawStateEventOwned {
     pub status: ItemStatus,
