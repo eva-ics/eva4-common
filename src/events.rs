@@ -95,6 +95,94 @@ impl<'de> Deserialize<'de> for NodeStatus {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
+pub enum Force {
+    #[default]
+    None,
+    // Weak force behavior: always updates item state even if the previous is the same, updates
+    // lvar state even if its status is 0
+    Weak,
+    /// Full force behavior: does the same as Weak, but also updates the item state even if the the
+    /// item is disabled
+    Full,
+}
+
+impl Serialize for Force {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Force::None => serializer.serialize_bool(false),
+            Force::Full => serializer.serialize_bool(true),
+            Force::Weak => serializer.serialize_str("weak"),
+        }
+    }
+}
+
+impl FromStr for Force {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Force, Self::Err> {
+        match input.to_lowercase().as_str() {
+            "none" => Ok(Force::None),
+            "full" => Ok(Force::Full),
+            "weak" => Ok(Force::Weak),
+            _ => Err(Error::invalid_data(format!(
+                "Invalid force value: {}",
+                input
+            ))),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Force {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ForceVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ForceVisitor {
+            type Value = Force;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a boolean or a string representing a force")
+            }
+
+            fn visit_bool<E>(self, value: bool) -> Result<Force, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(if value { Force::Full } else { Force::None })
+            }
+
+            fn visit_borrowed_str<E>(self, value: &str) -> Result<Force, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Force, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<Force, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_any(ForceVisitor)
+    }
+}
+
 /// Submitted by services via the bus for local items
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -104,7 +192,7 @@ pub struct RawStateEvent<'a> {
     pub value: ValueOption<'a>,
     #[serde(default)]
     // used to forcibly set e.g. lvar state, even if its status is 0
-    pub force: bool,
+    pub force: Force,
 }
 
 impl<'a> RawStateEvent<'a> {
@@ -113,7 +201,7 @@ impl<'a> RawStateEvent<'a> {
         Self {
             status,
             value: ValueOption::Value(value),
-            force: false,
+            force: Force::None,
         }
     }
     #[inline]
@@ -121,11 +209,15 @@ impl<'a> RawStateEvent<'a> {
         Self {
             status,
             value: ValueOption::No,
-            force: false,
+            force: Force::None,
         }
     }
     pub fn force(mut self) -> Self {
-        self.force = true;
+        self.force = Force::Full;
+        self
+    }
+    pub fn force_weak(mut self) -> Self {
+        self.force = Force::Weak;
         self
     }
 }
@@ -138,8 +230,7 @@ pub struct RawStateEventOwned {
     #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
     pub value: ValueOptionOwned,
     #[serde(default)]
-    // used to forcibly set e.g. lvar state, even if its status is 0
-    pub force: bool,
+    pub force: Force,
 }
 
 impl RawStateEventOwned {
@@ -148,7 +239,7 @@ impl RawStateEventOwned {
         Self {
             status,
             value: ValueOptionOwned::Value(value),
-            force: false,
+            force: Force::None,
         }
     }
     #[inline]
@@ -156,11 +247,15 @@ impl RawStateEventOwned {
         Self {
             status,
             value: ValueOptionOwned::No,
-            force: false,
+            force: Force::None,
         }
     }
     pub fn force(mut self) -> Self {
-        self.force = true;
+        self.force = Force::Full;
+        self
+    }
+    pub fn force_weak(mut self) -> Self {
+        self.force = Force::Weak;
         self
     }
 }
