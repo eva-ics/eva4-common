@@ -229,6 +229,7 @@ pub enum OnModifiedError {
 }
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct OnModifiedSet<'a> {
     /// For the selected OID mask list
     pub oid: &'a OIDMaskList,
@@ -240,6 +241,7 @@ pub struct OnModifiedSet<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct OnModifiedValueDelta<'a> {
     /// For the selected OID mask list
     pub oid: &'a OIDMaskList,
@@ -248,6 +250,7 @@ pub struct OnModifiedValueDelta<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct OnModifiedValueDeltaOwned {
     /// For the selected OID mask list
     pub oid: OIDMaskList,
