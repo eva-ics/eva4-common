@@ -207,8 +207,8 @@ impl<'de> Deserialize<'de> for Force {
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum OnModified<'a> {
-    Set(OnModifiedSet<'a>),
-    ValueDelta(OnModifiedValueDelta<'a>),
+    SetOther(OnModifiedSet<'a>),
+    SetOtherValueDelta(OnModifiedValueDelta<'a>),
 }
 
 /// On modified rules (owned)
