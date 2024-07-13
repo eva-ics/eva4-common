@@ -222,8 +222,11 @@ pub enum OnModifiedOwned {
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OnModifiedError {
+    /// Skip the operation
     Skip,
+    /// Reset item to status = 1, value = 0
     Reset,
+    /// Process the operation
     #[default]
     Process,
 }
@@ -240,25 +243,45 @@ pub struct OnModifiedSet<'a> {
     pub value: ValueOption<'a>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum OnNegativeDelta {
+    /// Skip the operation
+    Skip,
+    /// Reset item to value = 0
+    Reset,
+    /// Process the operation
+    #[default]
+    Process,
+    /// Respect the overflow
+    Overflow { floor: f64, ceil: f64 },
+}
+
+impl Eq for OnNegativeDelta {}
+
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct OnModifiedValueDelta<'a> {
     /// For the selected OID mask list
-    pub oid: &'a OIDMaskList,
+    pub oid: &'a OID,
     #[serde(default)]
     pub on_error: OnModifiedError,
+    #[serde(default)]
+    pub on_negative: OnNegativeDelta,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct OnModifiedValueDeltaOwned {
-    /// For the selected OID mask list
-    pub oid: OIDMaskList,
+    /// For the selected OID
+    pub oid: OID,
     /// Calculate delta per given period in seconds (e.g. 1.0 for delta per second, 3600.0 for
     /// delta per hour etc.)
     pub period: Option<f64>,
     #[serde(default)]
     pub on_error: OnModifiedError,
+    #[serde(default)]
+    pub on_negative: OnNegativeDelta,
 }
 
 impl Eq for OnModifiedValueDeltaOwned {}
