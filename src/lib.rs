@@ -9,6 +9,7 @@ use crate::value::{to_value, Value};
 use axum::http::StatusCode;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet};
 use std::convert::{TryFrom, TryInto};
@@ -280,7 +281,7 @@ impl std::fmt::Display for ErrorKind {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Error {
     kind: ErrorKind,
-    message: Option<String>,
+    message: Option<Cow<'static, str>>,
 }
 
 impl std::error::Error for Error {}
@@ -335,7 +336,7 @@ impl From<busrt::rpc::RpcError> for Error {
             kind: err.code().into(),
             message: err
                 .data()
-                .map(|v| std::str::from_utf8(v).unwrap_or_default().to_owned()),
+                .map(|v| Cow::Owned(std::str::from_utf8(v).unwrap_or_default().to_owned())),
         }
     }
 }
@@ -395,7 +396,7 @@ impl Error {
     pub fn new<T: fmt::Display>(kind: ErrorKind, message: T) -> Self {
         Self {
             kind,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -411,7 +412,7 @@ impl Error {
     pub fn newc(kind: ErrorKind, message: Option<impl fmt::Display>) -> Self {
         Self {
             kind,
-            message: message.map(|v| v.to_string()),
+            message: message.map(|v| Cow::Owned(v.to_string())),
         }
     }
 
@@ -423,7 +424,7 @@ impl Error {
     pub fn e<T: fmt::Display>(kind: ErrorKind, message: T) -> Self {
         Self {
             kind,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -431,7 +432,7 @@ impl Error {
     pub fn not_found<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::ResourceNotFound,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -439,7 +440,7 @@ impl Error {
     pub fn not_ready<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::NotReady,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -447,7 +448,7 @@ impl Error {
     pub fn unsupported<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::Unsupported,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -455,7 +456,7 @@ impl Error {
     pub fn registry<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::RegistryError,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -463,7 +464,7 @@ impl Error {
     pub fn busy<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::ResourceBusy,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -471,7 +472,7 @@ impl Error {
     pub fn core<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::CoreError,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -479,7 +480,7 @@ impl Error {
     pub fn io<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::IOError,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -487,7 +488,7 @@ impl Error {
     pub fn duplicate<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::ResourceAlreadyExists,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -495,7 +496,7 @@ impl Error {
     pub fn failed<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::FunctionFailed,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -503,7 +504,7 @@ impl Error {
     pub fn access<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::AccessDenied,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -511,7 +512,7 @@ impl Error {
     pub fn access_more_data_required<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::AccessDeniedMoreDataRequired,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
 
@@ -535,26 +536,32 @@ impl Error {
     pub fn invalid_data<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::InvalidData,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
+        }
+    }
+    fn invalid_data_static(message: &'static str) -> Self {
+        Self {
+            kind: ErrorKind::InvalidData,
+            message: Some(Cow::Borrowed(message)),
         }
     }
     pub fn invalid_params<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::InvalidParameter,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
     pub fn not_implemented<T: fmt::Display>(message: T) -> Self {
         Self {
             kind: ErrorKind::MethodNotImplemented,
-            message: Some(message.to_string()),
+            message: Some(Cow::Owned(message.to_string())),
         }
     }
     pub fn kind(&self) -> ErrorKind {
         self.kind
     }
     pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
+        self.message.as_deref().map(AsRef::as_ref)
     }
 }
 
@@ -586,7 +593,7 @@ impl From<Error> for (StatusCode, String) {
             ErrorKind::Timeout => StatusCode::REQUEST_TIMEOUT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
-        (code, e.message.unwrap_or_default())
+        (code, e.message.map(|v| v.to_string()).unwrap_or_default())
     }
 }
 

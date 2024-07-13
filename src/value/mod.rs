@@ -41,6 +41,12 @@ impl From<ser::SerializerError> for Error {
 }
 
 const ERR_INVALID_VALUE: &str = "Invalid value";
+const ERR_INVALID_BOOLEAN_VALUE: &str = "Invalid boolean value";
+const ERR_EXPECTED_VEC_OR_STRING: &str = "Expected Vec or String";
+const ERR_UNABLE_PARSE_FLOAT: &str = "Unable to parse float";
+const ERR_UNABLE_CONVERT_FLOAT: &str = "Unable to convert float";
+const ERR_TOO_BIG_NUMBER: &str = "Value too big";
+const ERR_TOO_SMALL_NUMBER: &str = "Value too small";
 
 macro_rules! float_from_bool {
     ($v: expr) => {
@@ -206,7 +212,7 @@ fn value_jp_insert(
 ) -> EResult<()> {
     macro_rules! abort {
         ($err:expr) => {
-            return Err(Error::invalid_data($err))
+            return Err(Error::invalid_data_static($err))
         };
     }
     if let Some(x) = sp.next() {
@@ -527,26 +533,22 @@ impl Value {
             if let Value::F64(vf) = self {
                 if precs > 0 {
                     let d = Decimal::from_f64_retain(vf)
-                        .ok_or_else(|| Error::invalid_data("unable to parse float"))?;
+                        .ok_or_else(|| Error::invalid_data_static(ERR_UNABLE_PARSE_FLOAT))?;
                     let rounded = d.round_dp(precs);
-                    return Ok(Value::F64(
-                        rounded
-                            .to_f64()
-                            .ok_or_else(|| Error::invalid_data("unable to convert float"))?,
-                    ));
+                    return Ok(Value::F64(rounded.to_f64().ok_or_else(|| {
+                        Error::invalid_data_static(ERR_UNABLE_CONVERT_FLOAT)
+                    })?));
                 }
                 return Ok(Value::U64(vf.round() as u64));
             }
             if let Value::F32(vf) = self {
                 if precs > 0 {
                     let d = Decimal::from_f32_retain(vf)
-                        .ok_or_else(|| Error::invalid_data("unable to parse float"))?;
+                        .ok_or_else(|| Error::invalid_data_static(ERR_UNABLE_PARSE_FLOAT))?;
                     let rounded = d.round_dp(precs);
-                    return Ok(Value::F32(
-                        rounded
-                            .to_f32()
-                            .ok_or_else(|| Error::invalid_data("unable to convert float"))?,
-                    ));
+                    return Ok(Value::F32(rounded.to_f32().ok_or_else(|| {
+                        Error::invalid_data_static(ERR_UNABLE_CONVERT_FLOAT)
+                    })?));
                 }
                 return Ok(Value::U32(vf.round() as u32));
             }
@@ -594,7 +596,7 @@ impl Value {
                 Ok(timestamp)
             }
         } else {
-            Err(Error::invalid_data("unsupported date/time format"))
+            Err(Error::invalid_data_static("unsupported date/time format"))
         }
     }
 
@@ -911,11 +913,7 @@ impl_from!(String, Value::String);
 macro_rules! ngt {
     ($n: expr, $from: ident, $to: ident) => {
         if $n > $to::MAX as $from {
-            return Err(Error::invalid_data(format!(
-                "value too big: {} (max: {})",
-                $n,
-                $to::MAX
-            )));
+            return Err(Error::invalid_data_static(ERR_TOO_BIG_NUMBER));
         } else {
             $n as $to
         }
@@ -925,17 +923,9 @@ macro_rules! ngt {
 macro_rules! ngt_nlt {
     ($n: expr, $from: ident, $to: ident) => {
         if $n > $to::MAX as $from {
-            return Err(Error::invalid_data(format!(
-                "value too big: {} (max: {})",
-                $n,
-                $to::MAX
-            )));
+            return Err(Error::invalid_data_static(ERR_TOO_BIG_NUMBER));
         } else if $n < $to::MIN as $from {
-            return Err(Error::invalid_data(format!(
-                "value too small: {} (min: {})",
-                $n,
-                $to::MIN
-            )));
+            return Err(Error::invalid_data_static(ERR_TOO_SMALL_NUMBER));
         } else {
             $n as $to
         }
@@ -945,10 +935,7 @@ macro_rules! ngt_nlt {
 macro_rules! nltz {
     ($n: expr, $from: ident, $to: ident) => {
         if $n < 0 as $from {
-            return Err(Error::invalid_data(format!(
-                "value too small: {} (min: 0)",
-                $n,
-            )));
+            return Err(Error::invalid_data_static(ERR_TOO_SMALL_NUMBER));
         } else {
             $n as $to
         }
@@ -972,7 +959,7 @@ impl TryFrom<Value> for u8 {
             Value::F32(v) => Ok(ngt_nlt!(v, f32, u8)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, u8)),
             Value::String(v) => Ok(v.parse::<u8>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -994,7 +981,7 @@ impl TryFrom<&Value> for u8 {
             Value::F32(v) => Ok(ngt_nlt!(*v, f32, u8)),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, u8)),
             Value::String(v) => Ok(v.parse::<u8>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1016,7 +1003,7 @@ impl TryFrom<Value> for i8 {
             Value::F32(v) => Ok(ngt_nlt!(v, f32, i8)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i8)),
             Value::String(v) => Ok(v.parse::<i8>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1038,7 +1025,7 @@ impl TryFrom<&Value> for i8 {
             Value::F32(v) => Ok(ngt_nlt!(*v, f32, i8)),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, i8)),
             Value::String(v) => Ok(v.parse::<i8>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1060,7 +1047,7 @@ impl TryFrom<Value> for u16 {
             Value::F32(v) => Ok(ngt_nlt!(v, f32, u16)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, u16)),
             Value::String(v) => Ok(v.parse::<u16>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1082,7 +1069,7 @@ impl TryFrom<&Value> for u16 {
             Value::F32(v) => Ok(ngt_nlt!(*v, f32, u16)),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, u16)),
             Value::String(v) => Ok(v.parse::<u16>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1104,7 +1091,7 @@ impl TryFrom<Value> for i16 {
             Value::F32(v) => Ok(ngt_nlt!(v, f32, i16)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i16)),
             Value::String(v) => Ok(v.parse::<i16>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1126,7 +1113,7 @@ impl TryFrom<&Value> for i16 {
             Value::F32(v) => Ok(ngt_nlt!(*v, f32, i16)),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, i16)),
             Value::String(v) => Ok(v.parse::<i16>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1148,7 +1135,7 @@ impl TryFrom<Value> for u32 {
             Value::F32(v) => Ok(nltz!(v, f32, u32)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, u32)),
             Value::String(v) => Ok(v.parse::<u32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1170,7 +1157,7 @@ impl TryFrom<&Value> for u32 {
             Value::F32(v) => Ok(nltz!(*v, f32, u32)),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, u32)),
             Value::String(v) => Ok(v.parse::<u32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1193,7 +1180,7 @@ impl TryFrom<Value> for i32 {
             Value::F32(v) => Ok(v as i32),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i32)),
             Value::String(v) => Ok(v.parse::<i32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1216,7 +1203,7 @@ impl TryFrom<&Value> for i32 {
             Value::F32(v) => Ok(*v as i32),
             Value::F64(v) => Ok(ngt_nlt!(*v, f64, i32)),
             Value::String(v) => Ok(v.parse::<i32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1238,7 +1225,7 @@ impl TryFrom<&Value> for u64 {
             Value::F32(v) => Ok(nltz!(*v, f32, u64)),
             Value::F64(v) => Ok(nltz!(*v, f64, u64)),
             Value::String(v) => Ok(v.parse::<u64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1260,7 +1247,7 @@ impl TryFrom<Value> for u64 {
             Value::F32(v) => Ok(nltz!(v, f32, u64)),
             Value::F64(v) => Ok(nltz!(v, f64, u64)),
             Value::String(v) => Ok(v.parse::<u64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1284,7 +1271,7 @@ impl TryFrom<&Value> for i64 {
             #[allow(clippy::cast_possible_truncation)]
             Value::F64(v) => Ok(*v as i64),
             Value::String(v) => Ok(v.parse::<i64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1308,7 +1295,7 @@ impl TryFrom<Value> for i64 {
             #[allow(clippy::cast_possible_truncation)]
             Value::F64(v) => Ok(v as i64),
             Value::String(v) => Ok(v.parse::<i64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1330,7 +1317,7 @@ impl TryFrom<Value> for f32 {
             Value::I32(v) => Ok(ngt_nlt!(v, i32, f32)),
             Value::I64(v) => Ok(ngt_nlt!(v, i64, f32)),
             Value::String(v) => Ok(v.parse::<f32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1352,7 +1339,7 @@ impl TryFrom<&Value> for f32 {
             Value::I32(v) => Ok(ngt_nlt!(*v, i32, f32)),
             Value::I64(v) => Ok(ngt_nlt!(*v, i64, f32)),
             Value::String(v) => Ok(v.parse::<f32>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1374,7 +1361,7 @@ impl TryFrom<&Value> for f64 {
             Value::F32(v) => Ok(f64::from(*v)),
             Value::F64(v) => Ok(*v),
             Value::String(v) => Ok(v.parse::<f64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1396,7 +1383,7 @@ impl TryFrom<Value> for f64 {
             Value::F32(v) => Ok(f64::from(v)),
             Value::F64(v) => Ok(v),
             Value::String(v) => Ok(v.parse::<f64>()?),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1421,7 +1408,7 @@ impl TryFrom<Value> for String {
         match v {
             Value::Option(Some(s)) => Ok((*s).try_into()?),
             Value::String(s) => Ok(s),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1433,7 +1420,7 @@ impl TryFrom<&Value> for String {
         match v {
             Value::Option(Some(s)) => Ok(s.as_ref().try_into()?),
             Value::String(s) => Ok(s.clone()),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1445,7 +1432,7 @@ impl<'a> TryFrom<&'a Value> for &'a str {
         match v {
             Value::Option(Some(s)) => Ok(s.as_ref().try_into()?),
             Value::String(s) => Ok(s),
-            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+            _ => Err(Error::invalid_data_static(ERR_INVALID_VALUE)),
         }
     }
 }
@@ -1462,7 +1449,7 @@ impl TryFrom<Value> for Option<String> {
             Value::Unit => return Ok(None),
             Value::String(s) => s,
             _ => {
-                return Err(Error::invalid_data(ERR_INVALID_VALUE));
+                return Err(Error::invalid_data_static(ERR_INVALID_VALUE));
             }
         };
         Ok(if s.is_empty() { None } else { Some(s) })
@@ -1484,7 +1471,7 @@ impl TryFrom<Value> for Vec<Value> {
         match value {
             Value::Seq(vec) => Ok(vec),
             Value::String(s) => Ok(s.split(',').map(|s| Value::String(s.to_owned())).collect()),
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1496,7 +1483,7 @@ impl<S: BuildHasher + Default> TryFrom<Value> for HashSet<Value, S> {
         match value {
             Value::Seq(vec) => Ok(HashSet::from_iter(vec)),
             Value::String(s) => Ok(s.split(',').map(|s| Value::String(s.to_owned())).collect()),
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1526,7 +1513,7 @@ impl<S: BuildHasher + Default> TryFrom<Value> for HashSet<ipnetwork::IpNetwork, 
                 }
                 Ok(result)
             }
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1544,7 +1531,7 @@ impl TryFrom<Value> for Vec<String> {
                 Ok(result)
             }
             Value::String(s) => Ok(s.split(',').map(ToOwned::to_owned).collect()),
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1562,7 +1549,7 @@ impl TryFrom<&Value> for Vec<String> {
                 Ok(result)
             }
             Value::String(s) => Ok(s.split(',').map(ToOwned::to_owned).collect()),
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1580,7 +1567,7 @@ impl<'a> TryFrom<&'a Value> for Vec<&'a str> {
                 Ok(result)
             }
             Value::String(s) => Ok(s.split(',').collect()),
-            _ => Err(Error::invalid_data("Expected vec or string")),
+            _ => Err(Error::invalid_data_static(ERR_EXPECTED_VEC_OR_STRING)),
         }
     }
 }
@@ -1594,24 +1581,18 @@ impl TryFrom<Value> for bool {
             Value::String(s) => match s.to_lowercase().as_str() {
                 "true" | "1" | "yes" => Ok(true),
                 "false" | "0" | "no" => Ok(false),
-                _ => Err(Error::invalid_data(format!(
-                    "Can not convert {} to boolean",
-                    s
-                ))),
+                _ => Err(Error::invalid_data_static(ERR_INVALID_BOOLEAN_VALUE)),
             },
             _ => {
                 let n: u64 = value
                     .try_into()
-                    .map_err(|_| Error::invalid_data("Expected boolean"))?;
+                    .map_err(|_| Error::invalid_data_static(ERR_INVALID_BOOLEAN_VALUE))?;
                 if n == 0 {
                     Ok(false)
                 } else if n == 1 {
                     Ok(true)
                 } else {
-                    Err(Error::invalid_data(format!(
-                        "Can not convert {} to boolean",
-                        n
-                    )))
+                    Err(Error::invalid_data_static(ERR_INVALID_BOOLEAN_VALUE))
                 }
             }
         }
