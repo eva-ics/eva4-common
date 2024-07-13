@@ -219,7 +219,7 @@ pub enum OnModifiedOwned {
     SetOtherValueDelta(OnModifiedValueDeltaOwned),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OnModifiedError {
     /// Skip the operation
@@ -243,7 +243,7 @@ pub struct OnModifiedSet<'a> {
     pub value: ValueOption<'a>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum OnNegativeDelta {
     /// Skip the operation
@@ -265,7 +265,9 @@ pub struct OnModifiedValueDelta<'a> {
     /// For the selected OID mask list
     pub oid: &'a OID,
     #[serde(default)]
+    /// On item status error
     pub on_error: OnModifiedError,
+    /// On negative delta
     #[serde(default)]
     pub on_negative: OnNegativeDelta,
 }
