@@ -360,20 +360,30 @@ impl Hash for Value {
     }
 }
 
+macro_rules! cmp_number {
+    ($n: expr, $v: expr, $t: ty) => {
+        if $v.is_numeric_type() {
+            <$t>::try_from($v).map_or(false, |v| $n == v)
+        } else {
+            false
+        }
+    };
+}
+
 impl PartialEq for Value {
     fn eq(&self, rhs: &Self) -> bool {
         match (self, rhs) {
             (&Value::Bool(v0), &Value::Bool(v1)) if v0 == v1 => true,
-            (&Value::U8(v0), &Value::U8(v1)) if v0 == v1 => true,
-            (&Value::U16(v0), &Value::U16(v1)) if v0 == v1 => true,
-            (&Value::U32(v0), &Value::U32(v1)) if v0 == v1 => true,
-            (&Value::U64(v0), &Value::U64(v1)) if v0 == v1 => true,
-            (&Value::I8(v0), &Value::I8(v1)) if v0 == v1 => true,
-            (&Value::I16(v0), &Value::I16(v1)) if v0 == v1 => true,
-            (&Value::I32(v0), &Value::I32(v1)) if v0 == v1 => true,
-            (&Value::I64(v0), &Value::I64(v1)) if v0 == v1 => true,
-            (&Value::F32(v0), &Value::F32(v1)) if OrderedFloat(v0) == OrderedFloat(v1) => true,
-            (&Value::F64(v0), &Value::F64(v1)) if OrderedFloat(v0) == OrderedFloat(v1) => true,
+            (&Value::U8(v0), v1) => cmp_number!(v0, v1, u8),
+            (&Value::U16(v0), v1) => cmp_number!(v0, v1, u16),
+            (&Value::U32(v0), v1) => cmp_number!(v0, v1, u32),
+            (&Value::U64(v0), v1) => cmp_number!(v0, v1, u64),
+            (&Value::I8(v0), v1) => cmp_number!(v0, v1, i8),
+            (&Value::I16(v0), v1) => cmp_number!(v0, v1, i16),
+            (&Value::I32(v0), v1) => cmp_number!(v0, v1, i32),
+            (&Value::I64(v0), v1) => cmp_number!(v0, v1, i64),
+            (&Value::F32(v0), v1) => cmp_number!(v0, v1, f32),
+            (&Value::F64(v0), v1) => cmp_number!(v0, v1, f64),
             (&Value::Char(v0), &Value::Char(v1)) if v0 == v1 => true,
             (Value::String(v0), Value::String(v1)) if v0 == v1 => true,
             (&Value::Unit, &Value::Unit) => true,
@@ -708,6 +718,21 @@ impl Value {
     pub fn is_unit(&self) -> bool {
         *self == Value::Unit
     }
+    pub fn is_numeric_type(&self) -> bool {
+        matches!(
+            self,
+            Value::U8(_)
+                | Value::U16(_)
+                | Value::U32(_)
+                | Value::U64(_)
+                | Value::I8(_)
+                | Value::I16(_)
+                | Value::I32(_)
+                | Value::I64(_)
+                | Value::F32(_)
+                | Value::F64(_)
+        )
+    }
     pub fn is_numeric(&self) -> bool {
         match self {
             Value::U8(_)
@@ -952,6 +977,28 @@ impl TryFrom<Value> for u8 {
     }
 }
 
+impl TryFrom<&Value> for u8 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<u8> {
+        match value {
+            Value::Bool(v) => Ok(u8::from(*v)),
+            Value::U8(v) => Ok(*v),
+            Value::U16(v) => Ok(ngt!(*v, u16, u8)),
+            Value::U32(v) => Ok(ngt!(*v, u32, u8)),
+            Value::U64(v) => Ok(ngt!(*v, u64, u8)),
+            Value::I8(v) => Ok(nltz!(*v, i8, u8)),
+            Value::I16(v) => Ok(ngt_nlt!(*v, i16, u8)),
+            Value::I32(v) => Ok(ngt_nlt!(*v, i32, u8)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, u8)),
+            Value::F32(v) => Ok(ngt_nlt!(*v, f32, u8)),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, u8)),
+            Value::String(v) => Ok(v.parse::<u8>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
 impl TryFrom<Value> for i8 {
     type Error = Error;
 
@@ -968,6 +1015,28 @@ impl TryFrom<Value> for i8 {
             Value::I64(v) => Ok(ngt_nlt!(v, i64, i8)),
             Value::F32(v) => Ok(ngt_nlt!(v, f32, i8)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i8)),
+            Value::String(v) => Ok(v.parse::<i8>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
+impl TryFrom<&Value> for i8 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<i8> {
+        match value {
+            Value::Bool(v) => Ok(i8::from(*v)),
+            Value::U8(v) => Ok(ngt!(*v, u8, i8)),
+            Value::U16(v) => Ok(ngt!(*v, u16, i8)),
+            Value::U32(v) => Ok(ngt!(*v, u32, i8)),
+            Value::U64(v) => Ok(ngt!(*v, u64, i8)),
+            Value::I8(v) => Ok(*v),
+            Value::I16(v) => Ok(ngt_nlt!(*v, i16, i8)),
+            Value::I32(v) => Ok(ngt_nlt!(*v, i32, i8)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, i8)),
+            Value::F32(v) => Ok(ngt_nlt!(*v, f32, i8)),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, i8)),
             Value::String(v) => Ok(v.parse::<i8>()?),
             _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
         }
@@ -996,6 +1065,28 @@ impl TryFrom<Value> for u16 {
     }
 }
 
+impl TryFrom<&Value> for u16 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<u16> {
+        match value {
+            Value::Bool(v) => Ok(u16::from(*v)),
+            Value::U8(v) => Ok(u16::from(*v)),
+            Value::U16(v) => Ok(*v),
+            Value::U32(v) => Ok(ngt!(*v, u32, u16)),
+            Value::U64(v) => Ok(ngt!(*v, u64, u16)),
+            Value::I8(v) => Ok(nltz!(*v, i8, u16)),
+            Value::I16(v) => Ok(nltz!(*v, i16, u16)),
+            Value::I32(v) => Ok(ngt_nlt!(*v, i32, u16)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, u16)),
+            Value::F32(v) => Ok(ngt_nlt!(*v, f32, u16)),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, u16)),
+            Value::String(v) => Ok(v.parse::<u16>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
 impl TryFrom<Value> for i16 {
     type Error = Error;
 
@@ -1012,6 +1103,28 @@ impl TryFrom<Value> for i16 {
             Value::I64(v) => Ok(ngt_nlt!(v, i64, i16)),
             Value::F32(v) => Ok(ngt_nlt!(v, f32, i16)),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i16)),
+            Value::String(v) => Ok(v.parse::<i16>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
+impl TryFrom<&Value> for i16 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<i16> {
+        match value {
+            Value::Bool(v) => Ok(i16::from(*v)),
+            Value::U8(v) => Ok(i16::from(*v)),
+            Value::U16(v) => Ok(ngt!(*v, u16, i16)),
+            Value::U32(v) => Ok(ngt!(*v, u32, i16)),
+            Value::U64(v) => Ok(ngt!(*v, u64, i16)),
+            Value::I8(v) => Ok(i16::from(*v)),
+            Value::I16(v) => Ok(*v),
+            Value::I32(v) => Ok(ngt_nlt!(*v, i32, i16)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, i16)),
+            Value::F32(v) => Ok(ngt_nlt!(*v, f32, i16)),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, i16)),
             Value::String(v) => Ok(v.parse::<i16>()?),
             _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
         }
@@ -1040,6 +1153,28 @@ impl TryFrom<Value> for u32 {
     }
 }
 
+impl TryFrom<&Value> for u32 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<u32> {
+        match value {
+            Value::Bool(v) => Ok(u32::from(*v)),
+            Value::U8(v) => Ok(u32::from(*v)),
+            Value::U16(v) => Ok(u32::from(*v)),
+            Value::U32(v) => Ok(*v),
+            Value::U64(v) => Ok(ngt!(*v, u64, u32)),
+            Value::I8(v) => Ok(nltz!(*v, i8, u32)),
+            Value::I16(v) => Ok(nltz!(*v, i16, u32)),
+            Value::I32(v) => Ok(nltz!(*v, i32, u32)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, u32)),
+            Value::F32(v) => Ok(nltz!(*v, f32, u32)),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, u32)),
+            Value::String(v) => Ok(v.parse::<u32>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
 impl TryFrom<Value> for i32 {
     type Error = Error;
 
@@ -1057,6 +1192,29 @@ impl TryFrom<Value> for i32 {
             #[allow(clippy::cast_possible_truncation)]
             Value::F32(v) => Ok(v as i32),
             Value::F64(v) => Ok(ngt_nlt!(v, f64, i32)),
+            Value::String(v) => Ok(v.parse::<i32>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
+impl TryFrom<&Value> for i32 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<i32> {
+        match value {
+            Value::Bool(v) => Ok(i32::from(*v)),
+            Value::U8(v) => Ok(i32::from(*v)),
+            Value::U16(v) => Ok(i32::from(*v)),
+            Value::U32(v) => Ok(ngt!(*v, u32, i32)),
+            Value::U64(v) => Ok(ngt!(*v, u64, i32)),
+            Value::I8(v) => Ok(i32::from(*v)),
+            Value::I16(v) => Ok(i32::from(*v)),
+            Value::I32(v) => Ok(*v),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, i32)),
+            #[allow(clippy::cast_possible_truncation)]
+            Value::F32(v) => Ok(*v as i32),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, i32)),
             Value::String(v) => Ok(v.parse::<i32>()?),
             _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
         }
@@ -1171,6 +1329,28 @@ impl TryFrom<Value> for f32 {
             Value::I16(v) => Ok(f32::from(v)),
             Value::I32(v) => Ok(ngt_nlt!(v, i32, f32)),
             Value::I64(v) => Ok(ngt_nlt!(v, i64, f32)),
+            Value::String(v) => Ok(v.parse::<f32>()?),
+            _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
+        }
+    }
+}
+
+impl TryFrom<&Value> for f32 {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> EResult<f32> {
+        match value {
+            Value::Bool(v) => Ok(float_from_bool!(*v)),
+            Value::F32(v) => Ok(*v),
+            Value::F64(v) => Ok(ngt_nlt!(*v, f64, f32)),
+            Value::U8(v) => Ok(f32::from(*v)),
+            Value::U16(v) => Ok(f32::from(*v)),
+            Value::U32(v) => Ok(ngt!(*v, u32, f32)),
+            Value::U64(v) => Ok(ngt!(*v, u64, f32)),
+            Value::I8(v) => Ok(f32::from(*v)),
+            Value::I16(v) => Ok(f32::from(*v)),
+            Value::I32(v) => Ok(ngt_nlt!(*v, i32, f32)),
+            Value::I64(v) => Ok(ngt_nlt!(*v, i64, f32)),
             Value::String(v) => Ok(v.parse::<f32>()?),
             _ => Err(Error::invalid_data(ERR_INVALID_VALUE)),
         }
