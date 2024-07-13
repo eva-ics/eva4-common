@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.60"
+version = "0.3.61"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"

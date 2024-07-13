@@ -219,11 +219,12 @@ pub enum OnModifiedOwned {
     SetOtherValueDelta(OnModifiedValueDeltaOwned),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OnModifiedError {
     Skip,
     Reset,
+    #[default]
     Process,
 }
 
@@ -242,6 +243,7 @@ pub struct OnModifiedSet<'a> {
 pub struct OnModifiedValueDelta<'a> {
     /// For the selected OID mask list
     pub oid: &'a OIDMaskList,
+    #[serde(default)]
     pub on_error: OnModifiedError,
 }
 
@@ -249,6 +251,7 @@ pub struct OnModifiedValueDelta<'a> {
 pub struct OnModifiedValueDeltaOwned {
     /// For the selected OID mask list
     pub oid: OIDMaskList,
+    #[serde(default)]
     pub on_error: OnModifiedError,
 }
 
