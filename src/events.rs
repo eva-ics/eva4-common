@@ -249,14 +249,19 @@ pub struct OnModifiedValueDelta<'a> {
     pub on_error: OnModifiedError,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct OnModifiedValueDeltaOwned {
     /// For the selected OID mask list
     pub oid: OIDMaskList,
+    /// Calculate delta per given period in seconds (e.g. 1.0 for delta per second, 3600.0 for
+    /// delta per hour etc.)
+    pub period: Option<f64>,
     #[serde(default)]
     pub on_error: OnModifiedError,
 }
+
+impl Eq for OnModifiedValueDeltaOwned {}
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq, Deserialize)]
 pub struct OnModifiedSetOwned {
