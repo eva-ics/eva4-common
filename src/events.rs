@@ -205,7 +205,28 @@ impl<'de> Deserialize<'de> for Force {
 
 /// On modified rules
 #[derive(Debug, Clone, Serialize, Eq, PartialEq)]
-pub struct OnModified<'a> {
+pub enum OnModified<'a> {
+    Set(OnModifiedSet<'a>),
+    ValueDelta(OnModifiedValueDelta<'a>),
+}
+
+/// On modified rules (owned)
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
+pub enum OnModifiedOwned {
+    SetOther(OnModifiedSetOwned),
+    SetOtherValueDelta(OnModifiedValueDeltaOwned),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum OnModifiedError {
+    Skip,
+    Reset,
+    Process,
+}
+
+#[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+pub struct OnModifiedSet<'a> {
     /// For the selected OID mask list
     pub oid: &'a OIDMaskList,
     /// The new status
@@ -215,9 +236,22 @@ pub struct OnModified<'a> {
     pub value: ValueOption<'a>,
 }
 
-/// On modified rules (owned)
+#[derive(Debug, Clone, Serialize, Eq, PartialEq)]
+pub struct OnModifiedValueDelta<'a> {
+    /// For the selected OID mask list
+    pub oid: &'a OIDMaskList,
+    pub on_error: OnModifiedError,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+pub struct OnModifiedValueDeltaOwned {
+    /// For the selected OID mask list
+    pub oid: OIDMaskList,
+    pub on_error: OnModifiedError,
+}
+
 #[derive(Debug, Clone, Serialize, Eq, PartialEq, Deserialize)]
-pub struct OnModifiedOwned {
+pub struct OnModifiedSetOwned {
     /// For the selected OID mask list
     pub oid: OIDMaskList,
     /// The new status
