@@ -240,7 +240,7 @@ pub struct RawStateEvent<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_compare: Option<ItemStatus>,
     /// Compare the value with the current value (optional)
-    #[serde(skip_serializing_if = "ValueOption::is_none")]
+    #[serde(default, skip_serializing_if = "ValueOption::is_none")]
     pub value_compare: ValueOption<'a>,
     /// if comparison is used and unequal, set item status. In case if status is not specified,
     /// `crate::ITEM_STATUS_ERROR` is used
@@ -304,7 +304,7 @@ pub struct RawStateEventOwned {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_compare: Option<ItemStatus>,
     /// Compare the value with the current value (optional)
-    #[serde(skip_serializing_if = "ValueOptionOwned::is_none")]
+    #[serde(default, skip_serializing_if = "ValueOptionOwned::is_none")]
     pub value_compare: ValueOptionOwned,
     /// if comparison is used and unequal, set item status. In case if status is not specified,
     /// `crate::ITEM_STATUS_ERROR` is used
