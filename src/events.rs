@@ -100,9 +100,9 @@ impl<'de> Deserialize<'de> for NodeStatus {
 pub enum Force {
     #[default]
     None,
-    // Weak force behavior: always updates item state even if the previous is the same, updates
+    // Update force behavior: always updates item state even if the previous is the same, updates
     // lvar state even if its status is 0
-    Weak,
+    Update,
     /// Full force behavior: does the same as Weak, but also updates the item state even if the the
     /// item is disabled
     Full,
@@ -115,7 +115,7 @@ impl Force {
     }
     #[inline]
     pub fn is_weak(&self) -> bool {
-        matches!(self, Force::Weak)
+        matches!(self, Force::Update)
     }
     #[inline]
     pub fn is_full(&self) -> bool {
@@ -135,7 +135,7 @@ impl Serialize for Force {
         match self {
             Force::None => serializer.serialize_bool(false),
             Force::Full => serializer.serialize_bool(true),
-            Force::Weak => serializer.serialize_str("weak"),
+            Force::Update => serializer.serialize_str("update"),
         }
     }
 }
@@ -147,7 +147,7 @@ impl FromStr for Force {
         match input.to_lowercase().as_str() {
             "none" => Ok(Force::None),
             "full" => Ok(Force::Full),
-            "weak" => Ok(Force::Weak),
+            "update" | "weak" => Ok(Force::Update),
             _ => Err(Error::invalid_data(format!(
                 "Invalid force value: {}",
                 input
