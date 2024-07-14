@@ -357,8 +357,8 @@ impl<'a> RawStateEvent<'a> {
         self.force = Force::Full;
         self
     }
-    pub fn force_weak(mut self) -> Self {
-        self.force = Force::Weak;
+    pub fn force_update(mut self) -> Self {
+        self.force = Force::Update;
         self
     }
 }
@@ -421,8 +421,8 @@ impl RawStateEventOwned {
         self.force = Force::Full;
         self
     }
-    pub fn force_weak(mut self) -> Self {
-        self.force = Force::Weak;
+    pub fn force_update(mut self) -> Self {
+        self.force = Force::Update;
         self
     }
 }
