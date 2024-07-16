@@ -341,6 +341,10 @@ impl OIDMaskList {
         self.acl_map.matches(oid.as_path())
     }
     #[inline]
+    pub fn matches_mask(&self, mask: &OIDMask) -> bool {
+        self.acl_map.matches(&mask.as_path())
+    }
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.oid_masks.is_empty()
     }
@@ -781,11 +785,24 @@ impl Acl {
                 && !self.deny_read.items.matches(oid))
     }
     #[inline]
+    pub fn check_item_mask_read(&self, mask: &OIDMask) -> bool {
+        self.admin
+            || ((self.read.items.matches_mask(mask) || self.write.items.matches_mask(mask))
+                && !self.deny_read.items.matches_mask(mask))
+    }
+    #[inline]
     pub fn check_item_write(&self, oid: &OID) -> bool {
         self.admin
             || (self.write.items.matches(oid)
                 && !self.deny_write.items.matches(oid)
                 && !self.deny_read.items.matches(oid))
+    }
+    #[inline]
+    pub fn check_item_mask_write(&self, mask: &OIDMask) -> bool {
+        self.admin
+            || (self.write.items.matches_mask(mask)
+                && !self.deny_write.items.matches_mask(mask)
+                && !self.deny_read.items.matches_mask(mask))
     }
     #[inline]
     pub fn check_pvt_read(&self, path: &str) -> bool {
@@ -846,11 +863,28 @@ impl Acl {
             Err(Error::access(format!("read access required for: {}", oid)))
         }
     }
+    pub fn require_item_mask_read(&self, mask: &OIDMask) -> EResult<()> {
+        if self.check_item_mask_read(mask) {
+            Ok(())
+        } else {
+            Err(Error::access(format!("read access required for: {}", mask)))
+        }
+    }
     pub fn require_item_write(&self, oid: &OID) -> EResult<()> {
         if self.check_item_write(oid) {
             Ok(())
         } else {
             Err(Error::access(format!("write access required for: {}", oid)))
+        }
+    }
+    pub fn require_item_mask_write(&self, mask: &OIDMask) -> EResult<()> {
+        if self.check_item_mask_write(mask) {
+            Ok(())
+        } else {
+            Err(Error::access(format!(
+                "write access required for: {}",
+                mask
+            )))
         }
     }
     pub fn require_pvt_read(&self, path: &str) -> EResult<()> {
