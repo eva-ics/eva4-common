@@ -300,7 +300,7 @@ pub struct OnModifiedSetOwned {
 }
 
 /// Submitted by services via the bus for local items
-#[derive(Debug, Clone, Serialize, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RawStateEvent<'a> {
     pub status: ItemStatus,
@@ -308,6 +308,9 @@ pub struct RawStateEvent<'a> {
     pub value: ValueOption<'a>,
     #[serde(default, skip_serializing_if = "Force::is_none")]
     pub force: Force,
+    /// Override the time of the event
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub t: Option<f64>,
     /// Compare the status with the current status (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_compare: Option<ItemStatus>,
@@ -326,6 +329,8 @@ pub struct RawStateEvent<'a> {
     pub on_modified: Option<OnModified<'a>>,
 }
 
+impl<'a> Eq for RawStateEvent<'a> {}
+
 impl<'a> RawStateEvent<'a> {
     #[inline]
     pub fn new(status: ItemStatus, value: &'a Value) -> Self {
@@ -333,6 +338,7 @@ impl<'a> RawStateEvent<'a> {
             status,
             value: ValueOption::Value(value),
             force: Force::None,
+            t: None,
             on_modified: None,
             status_compare: None,
             value_compare: ValueOption::No,
@@ -346,6 +352,7 @@ impl<'a> RawStateEvent<'a> {
             status,
             value: ValueOption::No,
             force: Force::None,
+            t: None,
             on_modified: None,
             status_compare: None,
             value_compare: ValueOption::No,
@@ -361,10 +368,14 @@ impl<'a> RawStateEvent<'a> {
         self.force = Force::Update;
         self
     }
+    pub fn at(mut self, t: f64) -> Self {
+        self.t = Some(t);
+        self
+    }
 }
 
 /// Submitted by services via the bus for local items
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RawStateEventOwned {
     pub status: ItemStatus,
@@ -372,6 +383,9 @@ pub struct RawStateEventOwned {
     pub value: ValueOptionOwned,
     #[serde(default, skip_serializing_if = "Force::is_none")]
     pub force: Force,
+    /// Override the time of the event
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub t: Option<f64>,
     /// Compare the status with the current status (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_compare: Option<ItemStatus>,
@@ -390,6 +404,8 @@ pub struct RawStateEventOwned {
     pub on_modified: Option<OnModifiedOwned>,
 }
 
+impl Eq for RawStateEventOwned {}
+
 impl RawStateEventOwned {
     #[inline]
     pub fn new(status: ItemStatus, value: Value) -> Self {
@@ -397,6 +413,7 @@ impl RawStateEventOwned {
             status,
             value: ValueOptionOwned::Value(value),
             force: Force::None,
+            t: None,
             status_compare: None,
             value_compare: ValueOptionOwned::No,
             status_else: None,
@@ -410,6 +427,7 @@ impl RawStateEventOwned {
             status,
             value: ValueOptionOwned::No,
             force: Force::None,
+            t: None,
             status_compare: None,
             value_compare: ValueOptionOwned::No,
             status_else: None,
@@ -423,6 +441,10 @@ impl RawStateEventOwned {
     }
     pub fn force_update(mut self) -> Self {
         self.force = Force::Update;
+        self
+    }
+    pub fn at(mut self, t: f64) -> Self {
+        self.t = Some(t);
         self
     }
 }
