@@ -380,6 +380,8 @@ impl PartialEq for Value {
     fn eq(&self, rhs: &Self) -> bool {
         match (self, rhs) {
             (&Value::Bool(v0), &Value::Bool(v1)) if v0 == v1 => true,
+            (v0, &Value::F32(v1)) => cmp_number!(v1, v0, f32),
+            (v0, &Value::F64(v1)) => cmp_number!(v1, v0, f64),
             (&Value::U8(v0), v1) => cmp_number!(v0, v1, u8),
             (&Value::U16(v0), v1) => cmp_number!(v0, v1, u16),
             (&Value::U32(v0), v1) => cmp_number!(v0, v1, u32),
