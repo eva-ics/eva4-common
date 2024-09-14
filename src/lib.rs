@@ -79,6 +79,7 @@ pub mod serde_keyvalue;
 pub mod services;
 #[cfg(feature = "time")]
 pub mod time;
+pub mod transform;
 #[cfg(feature = "workers")]
 pub mod workers;
 
