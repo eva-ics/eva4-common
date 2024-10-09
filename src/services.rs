@@ -208,6 +208,12 @@ impl Initial {
     pub fn user(&self) -> Option<&str> {
         self.user.as_deref()
     }
+    pub fn set_user(&mut self, user: Option<&str>) {
+        self.user = user.map(ToOwned::to_owned);
+    }
+    pub fn set_id(&mut self, id: &str) {
+        self.id = id.to_owned();
+    }
     #[inline]
     pub fn data_path(&self) -> Option<&str> {
         if let Some(ref user) = self.user {
@@ -315,6 +321,9 @@ impl Initial {
                 self.bus.tp
             )))
         }
+    }
+    pub fn set_bus_path(&mut self, path: &str) {
+        self.bus.path = path.to_owned();
     }
     #[inline]
     pub fn bus_path(&self) -> &str {
