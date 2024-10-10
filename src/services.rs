@@ -103,7 +103,9 @@ fn default_workers() -> u32 {
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RealtimeConfig {
+    #[serde(default)]
     pub priority: Option<i32>,
+    #[serde(default)]
     pub cpu_ids: Vec<usize>,
 }
 
