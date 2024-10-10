@@ -101,6 +101,12 @@ fn default_workers() -> u32 {
     1
 }
 
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct RealtimeConfig {
+    pub priority: Option<i32>,
+    pub cpu_ids: Vec<usize>,
+}
+
 /// Initial properties for services
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Initial {
@@ -115,6 +121,8 @@ pub struct Initial {
     timeout: Timeout,
     core: CoreInfo,
     bus: BusConfig,
+    #[serde(default)]
+    realtime: RealtimeConfig,
     #[serde(default)]
     config: Option<Value>,
     #[serde(default = "default_workers")]
@@ -162,6 +170,7 @@ impl Initial {
             timeout: timeout.clone(),
             core: core_info,
             bus,
+            realtime: <_>::default(),
             config: config.map(Clone::clone),
             workers,
             user: user.map(ToOwned::to_owned),
@@ -170,6 +179,10 @@ impl Initial {
             fips,
             call_tracing,
         }
+    }
+    pub fn with_realtime(mut self, realtime: RealtimeConfig) -> Self {
+        self.realtime = realtime;
+        self
     }
     #[inline]
     pub fn init(&self) -> EResult<()> {
@@ -199,6 +212,9 @@ impl Initial {
     #[inline]
     pub fn command(&self) -> &str {
         &self.command
+    }
+    pub fn realtime(&self) -> &RealtimeConfig {
+        &self.realtime
     }
     #[inline]
     pub fn prepare_command(&self) -> Option<&str> {
