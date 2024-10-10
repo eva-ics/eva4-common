@@ -227,6 +227,9 @@ impl Initial {
     pub fn planned_data_path(&self) -> &str {
         &self.data_path
     }
+    pub fn set_data_path(&mut self, path: &str) {
+        self.data_path = path.to_owned();
+    }
     #[inline]
     pub fn timeout(&self) -> Duration {
         self.timeout
