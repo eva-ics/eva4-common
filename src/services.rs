@@ -107,6 +107,8 @@ pub struct RealtimeConfig {
     pub priority: Option<i32>,
     #[serde(default)]
     pub cpu_ids: Vec<usize>,
+    #[serde(default)]
+    pub prealloc_heap: Option<usize>,
 }
 
 /// Initial properties for services
