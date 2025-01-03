@@ -79,7 +79,7 @@ dataconv = ["hex", "regex", "uuid"] # data conversion bindings
 cache = ["tokio", "sqlx", "payload"]
 payload = ["rmp-serde"]
 logic = []
-common-payloads = ["uuid", "rand"]
+common-payloads = ["uuid", "rand", "acl"]
 hyper-tools = ["hyper", "hyper-static"]
 full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers",
   "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
