@@ -713,7 +713,7 @@ impl PartialOrd for OID {
 }
 
 pub const OID_ALLOWED_SYMBOLS: &str = "_.()[]-\\";
-pub const OID_MASK_ALLOWED_SYMBOLS: &str = "!_.()[]-+?#*\\";
+pub const OID_MASK_ALLOWED_SYMBOLS: &str = "~!_.()[]-+?#*\\";
 
 impl OID {
     #[inline]
