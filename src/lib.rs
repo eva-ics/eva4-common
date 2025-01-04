@@ -61,8 +61,8 @@ pub mod db;
 pub mod dobj;
 #[cfg(any(feature = "events", feature = "common-payloads", feature = "logger"))]
 pub mod events;
-#[cfg(feature = "ext")]
-pub mod ext;
+//#[cfg(feature = "ext")]
+//pub mod ext;
 #[cfg(feature = "hyper")]
 pub mod hyper_tools;
 #[cfg(feature = "logger")]
