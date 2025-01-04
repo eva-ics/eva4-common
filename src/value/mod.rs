@@ -1,4 +1,11 @@
 //! Based on https://github.com/arcnmx/serde-value
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::cast_lossless
+)]
 
 use crate::{EResult, Error};
 use ordered_float::OrderedFloat;
@@ -112,7 +119,7 @@ pub enum ValueOption<'a> {
     Value(&'a Value),
 }
 
-impl<'a> ValueOption<'a> {
+impl ValueOption<'_> {
     pub fn is_none(&self) -> bool {
         matches!(self, ValueOption::No)
     }

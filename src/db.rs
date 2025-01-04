@@ -8,7 +8,6 @@
 ///
 /// For Time (feature "time" enabled) type use INTEGER for Sqlite and TIMESTAMP/TIMESTAMPTZ for
 /// Postgres
-
 #[cfg(feature = "acl")]
 use crate::acl::OIDMask;
 use crate::{value::Value, EResult, Error, OID};
@@ -155,6 +154,7 @@ impl<'q> Encode<'q, Sqlite> for OIDMask {
 
 #[cfg(feature = "acl")]
 impl Encode<'_, Postgres> for OIDMask {
+    #[allow(clippy::needless_borrows_for_generic_args)]
     fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
         <&str as Encode<Postgres>>::encode(&self.to_string(), buf)
     }
@@ -192,7 +192,7 @@ impl<'r> Decode<'r, Sqlite> for Value {
     }
 }
 
-impl<'q> Encode<'q, Postgres> for Value {
+impl Encode<'_, Postgres> for Value {
     fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
         buf.push(1);
         serde_json::to_writer(&mut **buf, &self)

@@ -1,3 +1,11 @@
+#![allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_lossless,
+    clippy::float_cmp,
+    clippy::cast_precision_loss
+)]
+
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -121,27 +129,22 @@ macro_rules! impl_Transform_N {
             fn to_num(&self) -> EResult<f64> {
                 Ok(*self as f64)
             }
-            #[allow(clippy::float_cmp)]
             #[inline]
             fn to_bool(&self) -> EResult<bool> {
-                Ok(*self != 0 as $t)
+                Ok(*self != 0. as $t)
             }
             #[inline]
             fn calc_speed(&self, oid: &OID, interval: f64) -> EResult<Option<f64>> {
                 calculate_growth_speed(oid, *self, $max, interval)
             }
-            #[allow(clippy::float_cmp)]
             #[inline]
             fn invert(&self) -> EResult<f64> {
-                Ok(if *self == 0 as $t { 1.0 } else { 0.0 })
+                Ok(if *self == 0. as $t { 1.0 } else { 0.0 })
             }
         }
     };
 }
 
-#[allow(clippy::cast_sign_loss)]
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_precision_loss)]
 fn round_to(value: f64, digits: f64) -> EResult<f64> {
     match digits {
         d if d < 0.0 => Err(Error::invalid_params(

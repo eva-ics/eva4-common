@@ -163,7 +163,7 @@ impl<'de> Deserialize<'de> for Force {
     {
         struct ForceVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for ForceVisitor {
+        impl serde::de::Visitor<'_> for ForceVisitor {
             type Value = Force;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -329,7 +329,7 @@ pub struct RawStateEvent<'a> {
     pub on_modified: Option<OnModified<'a>>,
 }
 
-impl<'a> Eq for RawStateEvent<'a> {}
+impl Eq for RawStateEvent<'_> {}
 
 impl<'a> RawStateEvent<'a> {
     #[inline]

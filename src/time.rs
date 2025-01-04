@@ -401,6 +401,7 @@ mod convert_chrono {
     }
 
     impl From<NaiveDateTime> for Time {
+        #[allow(deprecated)]
         fn from(datetime: NaiveDateTime) -> Self {
             Time {
                 sec: u64::try_from(datetime.and_utc().timestamp()).unwrap_or_default(),

@@ -79,7 +79,7 @@ impl<'de> Deserialize<'de> for PathMask {
 }
 
 struct PathMaskVisitor;
-impl<'de> serde::de::Visitor<'de> for PathMaskVisitor {
+impl serde::de::Visitor<'_> for PathMaskVisitor {
     type Value = PathMask;
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a string-packed path mask")

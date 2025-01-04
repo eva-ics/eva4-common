@@ -741,7 +741,7 @@ impl OID {
         let tp_str = kind.to_string();
         if id.is_empty() || group.is_empty() {
             Err(Error::invalid_data(ERR_INVALID_OID))
-        } else if tp_str.len() + id.len() + group.len() + 2 > std::u16::MAX as usize {
+        } else if tp_str.len() + id.len() + group.len() + 2 > u16::MAX as usize {
             Err(Error::invalid_data(ERR_OID_TOO_LONG))
         } else {
             let oid_str = format!("{}:{}/{}", kind, group, id);
@@ -772,7 +772,7 @@ impl OID {
         let tp_str = kind.to_string();
         if id.is_empty() {
             Err(Error::invalid_data(ERR_INVALID_OID))
-        } else if id.len() + tp_str.len() >= std::u16::MAX as usize {
+        } else if id.len() + tp_str.len() >= u16::MAX as usize {
             Err(Error::invalid_data(ERR_OID_TOO_LONG))
         } else {
             let grp_pos = id.rfind('/').map(|p| p as u16 + tp_str.len() as u16 + 1);

@@ -175,7 +175,7 @@ impl Initial {
             core: core_info,
             bus,
             realtime: <_>::default(),
-            config: config.map(Clone::clone),
+            config: config.cloned(),
             workers,
             user: user.map(ToOwned::to_owned),
             react_to_fail,
@@ -232,7 +232,7 @@ impl Initial {
         self.user = user.map(ToOwned::to_owned);
     }
     pub fn set_id(&mut self, id: &str) {
-        self.id = id.to_owned();
+        id.clone_into(&mut self.id);
     }
     #[inline]
     pub fn data_path(&self) -> Option<&str> {
@@ -248,7 +248,7 @@ impl Initial {
         &self.data_path
     }
     pub fn set_data_path(&mut self, path: &str) {
-        self.data_path = path.to_owned();
+        path.clone_into(&mut self.data_path);
     }
     #[inline]
     pub fn timeout(&self) -> Duration {
@@ -346,7 +346,7 @@ impl Initial {
         }
     }
     pub fn set_bus_path(&mut self, path: &str) {
-        self.bus.path = path.to_owned();
+        path.clone_into(&mut self.bus.path);
     }
     #[inline]
     pub fn bus_path(&self) -> &str {
@@ -641,7 +641,7 @@ impl BusConfig {
         &self.path
     }
     pub fn set_path(&mut self, path: &str) {
-        self.path = path.to_owned();
+        path.clone_into(&mut self.path);
     }
     pub fn offer_timeout(&mut self, timeout: f64) {
         if self.timeout.is_none() {
@@ -679,7 +679,7 @@ impl ServiceMethod {
         }
     }
     pub fn description(mut self, desc: &str) -> Self {
-        self.description = desc.to_owned();
+        desc.clone_into(&mut self.description);
         self
     }
     pub fn required(mut self, name: &str) -> Self {
