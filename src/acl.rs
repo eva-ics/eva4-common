@@ -1,5 +1,6 @@
 use crate::value::to_value;
 use crate::{is_str_any, is_str_wildcard, EResult, Error, ItemKind, Value, OID};
+use crate::{OID_MASK_PREFIX_FORMULA, OID_MASK_PREFIX_REGEX};
 use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 use std::collections::{hash_set, HashSet};
@@ -19,6 +20,8 @@ pub fn create_acl_map() -> AclMap {
         .separator('/')
         .wildcard_multiple(crate::WILDCARD)
         .match_any_multiple(crate::MATCH_ANY)
+        .formula_prefix(OID_MASK_PREFIX_FORMULA)
+        .regex_prefix(OID_MASK_PREFIX_REGEX)
 }
 
 #[derive(Debug, Clone, Eq)]
