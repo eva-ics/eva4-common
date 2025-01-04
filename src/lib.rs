@@ -1,8 +1,8 @@
 //#![cfg_attr(feature = "nostd", no_std)]
 
-#[cfg(feature = "ext")]
-#[macro_use]
-extern crate lazy_static;
+//#[cfg(feature = "ext")]
+//#[macro_use]
+//extern crate lazy_static;
 
 use crate::value::{to_value, Value};
 #[cfg(feature = "axum")]
