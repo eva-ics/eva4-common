@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.87"
+version = "0.3.88"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -60,7 +60,6 @@ env_logger = { version = "0.10", optional = true }
 binrw = { version = "0.13.3", optional = true }
 
 [features]
-default = ["fips"]
 nostd = []
 #ext = ["payload", "log", "libloading"]
 acl = ["submap"] # access control lists
