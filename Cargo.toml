@@ -65,7 +65,7 @@ nostd = []
 #ext = ["payload", "log", "libloading"]
 acl = ["submap"] # access control lists
 events = ["acl"] # common events
-services = ["bus-rpc", "tokio", "registry", "nix", "openssl"] # service structures and tools
+services = ["bus-rpc", "tokio", "registry", "nix"] # service structures and tools
 actions = ["uuid"] # action structures and tools
 registry = ["busrt", "payload"]
 logger = ["async-channel", "busrt", "tokio", "once_cell", "payload", "uuid"]
@@ -86,7 +86,7 @@ full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "
   "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
   "logic", "logger", "axum", "serde-keyvalue", "chrono", "console-logger", "data-objects"]
 skip_self_test_serde = []
-fips = []
+fips = ["openssl"]
 openssl-no-fips  = []
 openssl3 = ["once_cell"]
 console-logger = ["env_logger", "once_cell"]
