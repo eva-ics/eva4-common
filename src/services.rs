@@ -2,7 +2,7 @@ use crate::registry;
 use crate::Value;
 use crate::{EResult, Error};
 use busrt::rpc::{self, RpcClient, RpcHandlers};
-#[cfg(feature = "openssl3")]
+#[cfg(all(feature = "openssl3", feature = "fips"))]
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -19,18 +19,23 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
-#[cfg(feature = "openssl3")]
+#[cfg(all(feature = "openssl3", feature = "fips"))]
 #[allow(dead_code)]
 static FIPS_LOADED: OnceCell<()> = OnceCell::new();
 
-#[cfg(any(feature = "openssl-no-fips", feature = "openssl-vendored"))]
+#[cfg(any(
+    feature = "openssl-vendored",
+    feature = "openssl-no-fips",
+    not(feature = "fips")
+))]
 pub fn enable_fips() -> EResult<()> {
     Err(Error::failed(
         "FIPS can not be enabled, consider using a native OS distribution",
     ))
 }
 
-#[cfg(not(any(feature = "openssl-no-fips", feature = "openssl-vendored")))]
+#[cfg(not(any(feature = "openssl-vendored", feature = "openssl-no-fips")))]
+#[cfg(feature = "fips")]
 pub fn enable_fips() -> EResult<()> {
     #[cfg(feature = "openssl3")]
     {

@@ -60,6 +60,7 @@ env_logger = { version = "0.10", optional = true }
 binrw = { version = "0.13.3", optional = true }
 
 [features]
+default = ["fips"]
 nostd = []
 #ext = ["payload", "log", "libloading"]
 acl = ["submap"] # access control lists
@@ -85,6 +86,7 @@ full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "
   "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
   "logic", "logger", "axum", "serde-keyvalue", "chrono", "console-logger", "data-objects"]
 skip_self_test_serde = []
+fips = []
 openssl-no-fips  = []
 openssl3 = ["once_cell"]
 console-logger = ["env_logger", "once_cell"]
