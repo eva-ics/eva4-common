@@ -794,8 +794,8 @@ impl<T> EventBuffer<T> {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum ReplicationStateEventExtended {
-    Basic(ReplicationStateEvent),
     Inventory(ReplicationNodeInventoryItem),
+    Basic(ReplicationStateEvent),
 }
 
 impl ReplicationStateEventExtended {
