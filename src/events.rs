@@ -575,6 +575,7 @@ pub struct ReplicationStateEvent {
     pub ieid: IEID,
     pub t: f64,
     pub node: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub force_accept: bool,
 }
 
