@@ -790,3 +790,26 @@ impl<T> EventBuffer<T> {
         std::mem::take(&mut *self.data.lock())
     }
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum ReplicationStateEventExtended {
+    Basic(ReplicationStateEvent),
+    Inventory(ReplicationNodeInventoryItem),
+}
+
+impl ReplicationStateEventExtended {
+    pub fn node(&self) -> &str {
+        match self {
+            ReplicationStateEventExtended::Basic(v) => &v.node,
+            ReplicationStateEventExtended::Inventory(v) => &v.node,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ReplicationNodeInventoryItem {
+    pub node: String,
+    #[serde(flatten)]
+    pub item: ReplicationInventoryItem,
+}
