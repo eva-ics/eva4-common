@@ -63,7 +63,7 @@ pub mod dobj;
 pub mod events;
 //#[cfg(feature = "ext")]
 //pub mod ext;
-#[cfg(feature = "hyper")]
+#[cfg(feature = "hyper-tools")]
 pub mod hyper_tools;
 #[cfg(feature = "logger")]
 pub mod logger;
