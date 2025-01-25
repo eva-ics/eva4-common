@@ -56,7 +56,6 @@ impl FromStr for NodeStatus {
 
 /// submitted to RPL/NODE/<name>
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct NodeStateEvent {
     pub status: NodeStatus,
     #[serde(default)]
@@ -67,6 +66,12 @@ pub struct NodeStateEvent {
         deserialize_with = "crate::tools::de_opt_float_as_duration"
     )]
     pub timeout: Option<Duration>,
+    // Node pub/sub API enabled (default: true)
+    #[serde(
+        default = "crate::tools::default_true",
+        skip_serializing_if = "crate::tools::is_true"
+    )]
+    pub api_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

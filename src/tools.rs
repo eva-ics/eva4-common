@@ -316,3 +316,8 @@ where
 pub fn default_true() -> bool {
     true
 }
+
+#[inline]
+pub fn is_true(b: &bool) -> bool {
+    *b
+}
