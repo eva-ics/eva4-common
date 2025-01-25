@@ -567,7 +567,6 @@ pub struct ReplicationState {
 
 /// Submitted by replication services for remote items
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct ReplicationStateEvent {
     pub status: ItemStatus,
     pub value: Value,
@@ -576,6 +575,7 @@ pub struct ReplicationStateEvent {
     pub ieid: IEID,
     pub t: f64,
     pub node: String,
+    pub force_accept: bool,
 }
 
 impl From<ReplicationStateEvent> for ReplicationState {
@@ -626,6 +626,7 @@ impl ReplicationStateEvent {
             ieid,
             t,
             node: node.to_owned(),
+            force_accept: false,
         }
     }
 }
