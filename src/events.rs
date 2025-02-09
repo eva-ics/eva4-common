@@ -102,8 +102,8 @@ pub enum Force {
     // Update force behavior: always updates item state even if the previous is the same, updates
     // lvar state even if its status is 0
     Update,
-    /// Full force behavior: does the same as Weak, but also updates the item state even if the the
-    /// item is disabled
+    /// Full force behavior: does the same as Update, but also updates the item state even if the
+    /// the item is disabled
     Full,
 }
 
