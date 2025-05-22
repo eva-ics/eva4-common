@@ -204,6 +204,10 @@ impl Initial {
         self.realtime = realtime;
         self
     }
+    pub fn with_restart_delay(mut self, delay: Duration) -> Self {
+        self.restart_delay = delay;
+        self
+    }
     #[inline]
     pub fn init(&self) -> EResult<()> {
         #[cfg(feature = "openssl-no-fips")]
