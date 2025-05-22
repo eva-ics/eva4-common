@@ -155,8 +155,8 @@ pub struct Initial {
     call_tracing: bool,
     #[serde(
         default = "default_restart_delay",
-        deserialize_with = "crate::tools::de_float_as_duration"
-        serialize_with = "crate::tools::serialize_duration_as_float"
+        deserialize_with = "crate::tools::de_float_as_duration",
+        serialize_with = "crate::tools::serialize_duration_as_f64"
     )]
     restart_delay: Duration,
 }
