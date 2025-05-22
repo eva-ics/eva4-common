@@ -276,11 +276,26 @@ where
     Ok(Duration::from_nanos(u64::deserialize(deserializer)?))
 }
 
+fn check_float_for_duration(t: f64) -> Result<(), String> {
+    if t < 0.0 {
+        return Err(format!("negative duration not allowed: {}", t));
+    }
+    if t.is_nan() {
+        return Err(format!("nan duration not allowed: {}", t));
+    }
+    if t.is_infinite() {
+        return Err(format!("infinite duration not allowed: {}", t));
+    }
+    Ok(())
+}
+
 pub fn de_float_as_duration<'de, D>(deserializer: D) -> Result<Duration, D::Error>
 where
     D: Deserializer<'de>,
 {
-    Ok(Duration::from_secs_f64(f64::deserialize(deserializer)?))
+    let t = f64::deserialize(deserializer)?;
+    check_float_for_duration(t).map_err(serde::de::Error::custom)?;
+    Ok(Duration::from_secs_f64(t))
 }
 
 pub fn de_opt_float_as_duration<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
@@ -288,7 +303,11 @@ where
     D: Deserializer<'de>,
 {
     let t: Option<f64> = Option::deserialize(deserializer)?;
-    Ok(t.map(Duration::from_secs_f64))
+    let Some(t) = t else {
+        return Ok(None);
+    };
+    check_float_for_duration(t).map_err(serde::de::Error::custom)?;
+    Ok(Some(Duration::from_secs_f64(t)))
 }
 
 #[allow(clippy::cast_possible_truncation)]
