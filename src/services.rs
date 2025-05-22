@@ -116,6 +116,10 @@ pub struct RealtimeConfig {
     pub prealloc_heap: Option<usize>,
 }
 
+fn default_restart_delay() -> Duration {
+    Duration::from_secs(2)
+}
+
 /// Initial properties for services
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Initial {
@@ -149,6 +153,11 @@ pub struct Initial {
     fips: bool,
     #[serde(default)]
     call_tracing: bool,
+    #[serde(
+        default = "default_restart_delay",
+        deserialize_with = "crate::tools::de_float_as_duration"
+    )]
+    restart_delay: Duration,
 }
 
 impl Initial {
@@ -187,6 +196,7 @@ impl Initial {
             fail_mode: atomic::AtomicBool::new(false),
             fips,
             call_tracing,
+            restart_delay: default_restart_delay(),
         }
     }
     pub fn with_realtime(mut self, realtime: RealtimeConfig) -> Self {
@@ -306,6 +316,10 @@ impl Initial {
     #[inline]
     pub fn call_tracing(&self) -> bool {
         self.call_tracing
+    }
+    #[inline]
+    pub fn restart_delay(&self) -> Duration {
+        self.restart_delay
     }
     #[inline]
     pub fn eva_log_level_filter(&self) -> log::LevelFilter {
