@@ -69,6 +69,8 @@ pub mod hyper_tools;
 pub mod logger;
 #[cfg(feature = "logic")]
 pub mod logic;
+#[cfg(feature = "multimedia")]
+pub mod multimedia;
 #[cfg(feature = "payload")]
 pub mod payload;
 #[cfg(feature = "registry")]

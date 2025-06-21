@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.99"
+version = "0.3.100"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -58,6 +58,9 @@ remain = { version = "0.2.11", optional = true }
 chrono = { version = "0.4.31", optional = true }
 env_logger = { version = "0.10", optional = true }
 binrw = { version = "0.13.3", optional = true }
+gst = { version = "0.22", package = "gstreamer", optional = true }
+gst-video = { version = "0.22", package = "gstreamer-video", optional = true }
+strum = { version = "0.27", features = ["derive", "strum_macros"], optional = true }
 
 [features]
 nostd = []
@@ -83,10 +86,11 @@ common-payloads = ["dep:uuid", "dep:rand", "acl"]
 hyper-tools = ["dep:hyper", "dep:hyper-static"]
 full = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers",
   "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
-  "logic", "logger", "axum", "serde-keyvalue", "dep:chrono", "console-logger", "data-objects"]
+  "logic", "logger", "axum", "serde-keyvalue", "dep:chrono", "console-logger", "data-objects", "multimedia"]
 skip_self_test_serde = []
 fips = ["openssl"]
 openssl-no-fips  = []
 openssl3 = ["dep:once_cell"]
 console-logger = ["dep:env_logger", "dep:once_cell"]
 data-objects = ["dep:binrw"]
+multimedia = ["dep:gst", "dep:gst-video", "dep:binrw", "dep:strum"]
