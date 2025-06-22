@@ -1,6 +1,6 @@
 use crate::{EResult, Error, Value};
 use binrw::prelude::*;
-use gst::{Buffer, BufferFlags, BufferRef, Caps};
+use gst::{Buffer, BufferFlags, BufferRef, Caps, CapsRef};
 use gst_video::VideoInfo;
 use strum::IntoEnumIterator as _;
 use strum::{Display, EnumIter, EnumString};
@@ -38,11 +38,15 @@ impl FrameHeader {
         FrameHeader::read(&mut cursor)
     }
     pub fn try_from_caps(caps: &gst::Caps) -> EResult<Self> {
-        let s = caps.structure(0).ok_or_else(|| {
+        let caps_ref = caps.as_ref();
+        Self::try_from_caps_ref(caps_ref)
+    }
+    pub fn try_from_caps_ref(caps_ref: &CapsRef) -> EResult<Self> {
+        let s = caps_ref.structure(0).ok_or_else(|| {
             Error::invalid_data("No structure found in the provided GStreamer caps")
         })?;
         let codec: VideoFormat = s.name().parse().map_err(Error::invalid_data)?;
-        let info = VideoInfo::from_caps(caps).map_err(Error::invalid_data)?;
+        let info = VideoInfo::from_caps(caps_ref).map_err(Error::invalid_data)?;
         let width = info.width().try_into()?;
         let height = info.height().try_into()?;
         Ok(Self::new(codec, width, height))
