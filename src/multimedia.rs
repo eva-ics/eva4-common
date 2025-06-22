@@ -7,7 +7,7 @@ use strum::{Display, EnumIter, EnumString};
 
 #[binrw]
 #[brw(little, magic = b"EVS")]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FrameHeader {
     version: u8,
     format: u8,
