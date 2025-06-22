@@ -1,6 +1,6 @@
 [package]
 name = "eva-common"
-version = "0.3.100"
+version = "0.3.101"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -10,10 +10,14 @@ readme = "README.md"
 keywords = ["eva-ics", "iot", "industrial", "scada", "cloud"]
 
 [package.metadata.docs.rs]
-features = ["full", "openssl-no-fips"]
+features = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers",
+  "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
+  "logic", "logger", "axum", "serde-keyvalue", "dep:chrono", "console-logger", "data-objects", "openssl-no-fips"]
 
 [package.metadata.playground]
-features = ["full", "openssl-no-fips"]
+features = ["acl", "actions", "events", "time", "bus-rpc", "services", "registry", "workers",
+  "dataconv", "db", "cache", "hyper-tools", "extended-value", "common-payloads", "payload",
+  "logic", "logger", "axum", "serde-keyvalue", "dep:chrono", "console-logger", "data-objects", "openssl-no-fips"]
 
 [lib]
 name = "eva_common"

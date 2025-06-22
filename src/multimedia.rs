@@ -1,6 +1,6 @@
 use crate::{EResult, Error, Value};
 use binrw::prelude::*;
-use gst::{Buffer, BufferFlags, Caps};
+use gst::{Buffer, BufferFlags, BufferRef, Caps};
 use gst_video::VideoInfo;
 use strum::IntoEnumIterator as _;
 use strum::{Display, EnumIter, EnumString};
@@ -127,15 +127,21 @@ impl VideoFormat {
 
 impl Value {
     pub fn try_from_gstreamer_buffer(header: &FrameHeader, buffer: &Buffer) -> EResult<Value> {
+        Self::try_from_gstreamer_buffer_ref(header, buffer.as_ref())
+    }
+    pub fn try_from_gstreamer_buffer_ref(
+        header: &FrameHeader,
+        buffer_ref: &BufferRef,
+    ) -> EResult<Value> {
         let mut header = header.clone();
-        let flags = buffer.flags();
+        let flags = buffer_ref.flags();
         let is_key = !flags.contains(BufferFlags::DELTA_UNIT);
         if is_key {
             header.set_key_frame();
         }
-        let mut frame_buf = header.into_vec(buffer.size());
+        let mut frame_buf = header.into_vec(buffer_ref.size());
         frame_buf.extend(
-            buffer
+            buffer_ref
                 .map_readable()
                 .map_err(Error::invalid_data)?
                 .as_slice(),

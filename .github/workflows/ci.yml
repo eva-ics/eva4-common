@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install glib
+        run: apt-get -y install libglib2.0-dev
+        run: rustup component add clippy
       - name: cargo test
         run: cargo test --verbose --all-features --all-targets
   fmt:
