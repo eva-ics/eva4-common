@@ -98,17 +98,21 @@ pub const EVA_MULTIMEDIA_VERSION: u8 = 1;
     Hash,
 )]
 #[repr(u8)]
-#[serde(rename_all = "snake_case")]
 pub enum VideoFormat {
     #[strum(serialize = "video/x-h264")]
+    #[serde(rename = "h264")]
     H264 = 10,
     #[strum(serialize = "video/x-h265")]
+    #[serde(rename = "h265")]
     H265 = 11,
     #[strum(serialize = "video/x-vp8")]
+    #[serde(rename = "vp8")]
     VP8 = 12,
     #[strum(serialize = "video/x-vp9")]
+    #[serde(rename = "vp9")]
     VP9 = 13,
     #[strum(serialize = "video/x-av1")]
+    #[serde(rename = "av1")]
     AV1 = 14,
 }
 
