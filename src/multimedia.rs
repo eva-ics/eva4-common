@@ -82,7 +82,21 @@ impl FrameHeader {
 
 pub const EVA_MULTIMEDIA_VERSION: u8 = 1;
 
-#[derive(Serialize, Deserialize, EnumString, EnumIter, Display, Debug, PartialEq, Copy, Clone)]
+#[derive(
+    Serialize,
+    Deserialize,
+    EnumString,
+    EnumIter,
+    Display,
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+)]
 #[repr(u8)]
 #[serde(rename_all = "snake_case")]
 pub enum VideoFormat {
