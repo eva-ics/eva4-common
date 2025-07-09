@@ -2,6 +2,7 @@ use crate::{EResult, Error, Value};
 use binrw::prelude::*;
 use gst::{Buffer, BufferFlags, BufferRef, Caps, CapsRef};
 use gst_video::VideoInfo;
+use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator as _;
 use strum::{Display, EnumIter, EnumString};
 
@@ -81,8 +82,9 @@ impl FrameHeader {
 
 pub const EVA_MULTIMEDIA_VERSION: u8 = 1;
 
-#[derive(EnumString, EnumIter, Display, Debug, PartialEq, Copy, Clone)]
+#[derive(Serialize, Deserialize, EnumString, EnumIter, Display, Debug, PartialEq, Copy, Clone)]
 #[repr(u8)]
+#[serde(rename_all = "snake_case")]
 pub enum VideoFormat {
     #[strum(serialize = "video/x-h264")]
     H264 = 10,
