@@ -548,7 +548,7 @@ impl Value {
                         Error::invalid_data_static(ERR_UNABLE_CONVERT_FLOAT)
                     })?));
                 }
-                return Ok(Value::U64(vf.round() as u64));
+                return Ok(Value::I64(vf.round() as i64));
             }
             if let Value::F32(vf) = self {
                 if precs > 0 {
@@ -559,7 +559,7 @@ impl Value {
                         Error::invalid_data_static(ERR_UNABLE_CONVERT_FLOAT)
                     })?));
                 }
-                return Ok(Value::U32(vf.round() as u32));
+                return Ok(Value::I32(vf.round() as i32));
             }
         }
         Ok(self)
