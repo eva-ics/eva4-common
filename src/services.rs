@@ -6,6 +6,7 @@ use busrt::rpc::{self, RpcClient, RpcHandlers};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(target_os = "linux")]
 use std::ffi::CString;
 use std::fmt;
 #[cfg(feature = "extended-value")]
@@ -486,7 +487,7 @@ impl Initial {
     pub fn set_fail_mode(&self, mode: bool) {
         self.fail_mode.store(mode, atomic::Ordering::SeqCst);
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
         if let Some(ref user) = self.user {
