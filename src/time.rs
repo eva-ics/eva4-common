@@ -153,7 +153,7 @@ impl Time {
     /// Will panic if the system real-time clock is not available
     /// Will panic on Windows if the clock is set before 1.1.1970
     #[allow(clippy::cast_sign_loss)]
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     #[inline]
     pub fn now() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_REALTIME).unwrap();
@@ -175,7 +175,7 @@ impl Time {
     /// Will panic if the system monotonic clock is not available
     #[inline]
     #[allow(clippy::cast_sign_loss)]
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     pub fn now_monotonic() -> Self {
         let t = nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC).unwrap();
         Self {

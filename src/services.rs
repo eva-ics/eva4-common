@@ -524,6 +524,13 @@ impl Initial {
         }
         Ok(())
     }
+    
+    #[cfg(not(target_os = "linux"))]
+    #[inline]
+    pub fn drop_privileges(&self) -> EResult<()> {
+        eprintln(!"WARNING privileges not dropped");
+        Ok(())
+    }
     pub fn into_legacy_compat(mut self) -> Self {
         self.data_path = self.data_path().unwrap_or_default().to_owned();
         let user = self.user.take().unwrap_or_default();
@@ -547,7 +554,7 @@ impl Initial {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     let u = nix::unistd::User::from_name(user)
         .map_err(|e| Error::failed(format!("failed to get the system user {}: {}", user, e)))?
@@ -555,7 +562,7 @@ pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     Ok(u)
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 pub fn get_system_group(group: &str) -> EResult<nix::unistd::Group> {
     let g = nix::unistd::Group::from_name(group)
         .map_err(|e| Error::failed(format!("failed to get the system group {}: {}", group, e)))?
