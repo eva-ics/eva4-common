@@ -6,6 +6,7 @@ use busrt::rpc::{self, RpcClient, RpcHandlers};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(target_os = "linux")]
 use std::ffi::CString;
 use std::fmt;
 #[cfg(feature = "extended-value")]
@@ -486,7 +487,7 @@ impl Initial {
     pub fn set_fail_mode(&self, mode: bool) {
         self.fail_mode.store(mode, atomic::Ordering::SeqCst);
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
         if let Some(ref user) = self.user {
@@ -523,6 +524,13 @@ impl Initial {
         }
         Ok(())
     }
+    
+    #[cfg(not(target_os = "linux"))]
+    #[inline]
+    pub fn drop_privileges(&self) -> EResult<()> {
+        eprintln(!"WARNING privileges not dropped");
+        Ok(())
+    }
     pub fn into_legacy_compat(mut self) -> Self {
         self.data_path = self.data_path().unwrap_or_default().to_owned();
         let user = self.user.take().unwrap_or_default();
@@ -546,7 +554,7 @@ impl Initial {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     let u = nix::unistd::User::from_name(user)
         .map_err(|e| Error::failed(format!("failed to get the system user {}: {}", user, e)))?
@@ -554,7 +562,7 @@ pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     Ok(u)
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 pub fn get_system_group(group: &str) -> EResult<nix::unistd::Group> {
     let g = nix::unistd::Group::from_name(group)
         .map_err(|e| Error::failed(format!("failed to get the system group {}: {}", group, e)))?
