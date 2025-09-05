@@ -524,7 +524,7 @@ impl Initial {
         }
         Ok(())
     }
-    
+
     #[cfg(not(target_os = "linux"))]
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
