@@ -528,7 +528,7 @@ impl Initial {
     #[cfg(not(target_os = "linux"))]
     #[inline]
     pub fn drop_privileges(&self) -> EResult<()> {
-        eprintln(!"WARNING privileges not dropped");
+        eprintln!("WARNING privileges not dropped");
         Ok(())
     }
     pub fn into_legacy_compat(mut self) -> Self {
