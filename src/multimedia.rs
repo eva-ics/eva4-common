@@ -52,7 +52,7 @@ impl FrameHeader {
         let height = info.height().try_into()?;
         Ok(Self::new(codec, width, height))
     }
-    pub fn to_caps(&self) -> EResult<gst::Caps> {
+    pub fn try_to_caps(&self) -> EResult<gst::Caps> {
         let format = self.format()?;
         Ok(format.into_caps_with_dimensions(self.width.into(), self.height.into()))
     }
