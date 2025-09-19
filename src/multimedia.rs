@@ -147,10 +147,14 @@ impl VideoFormat {
         Caps::builder(self.to_string()).build()
     }
     pub fn into_caps_with_dimensions(self, width: u32, height: u32) -> gst::Caps {
-        Caps::builder(self.to_string())
-            .field("width", width)
-            .field("height", height)
-            .build()
+        if self == VideoFormat::Raw {
+            return Caps::builder(self.to_string())
+                .field("width", width)
+                .field("height", height)
+                .field("format", "I420")
+                .build();
+        }
+        Caps::builder(self.to_string()).build()
     }
     pub fn all_caps() -> gst::Caps {
         let mut caps = Caps::new_empty();
