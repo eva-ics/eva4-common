@@ -151,7 +151,6 @@ impl VideoFormat {
             return Caps::builder(self.to_string())
                 .field("width", width)
                 .field("height", height)
-                .field("format", "I420")
                 .build();
         }
         Caps::builder(self.to_string()).build()
