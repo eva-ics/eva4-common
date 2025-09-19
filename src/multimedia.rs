@@ -99,6 +99,9 @@ pub const EVA_MULTIMEDIA_VERSION: u8 = 1;
 )]
 #[repr(u8)]
 pub enum VideoFormat {
+    #[strum(serialize = "video/x-raw")]
+    #[serde(rename = "raw")]
+    Raw = 0,
     #[strum(serialize = "video/x-h264")]
     #[serde(rename = "h264")]
     H264 = 10,
@@ -121,6 +124,7 @@ impl TryFrom<u8> for VideoFormat {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
+            0 => Ok(VideoFormat::Raw),
             10 => Ok(VideoFormat::H264),
             11 => Ok(VideoFormat::H265),
             12 => Ok(VideoFormat::VP8),
@@ -137,6 +141,12 @@ impl TryFrom<u8> for VideoFormat {
 impl VideoFormat {
     pub fn into_caps(self) -> gst::Caps {
         Caps::builder(self.to_string()).build()
+    }
+    pub fn into_caps_with_dimensions(self, width: u32, height: u32) -> gst::Caps {
+        Caps::builder(self.to_string())
+            .field("width", width)
+            .field("height", height)
+            .build()
     }
     pub fn all_caps() -> gst::Caps {
         let mut caps = Caps::new_empty();
