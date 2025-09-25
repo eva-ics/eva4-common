@@ -17,7 +17,7 @@ pub struct FrameHeader {
     // bits
     // 0 - key frame
     // 1-7 - reserved
-    metadata: u8,
+    flags: u8,
 }
 
 impl FrameHeader {
@@ -28,11 +28,11 @@ impl FrameHeader {
             format: format as u8,
             width,
             height,
-            metadata: 0,
+            flags: 0,
         }
     }
     pub fn set_key_frame(&mut self) {
-        self.metadata |= 0b0000_0001;
+        self.flags |= 0b0000_0001;
     }
     pub fn from_slice(slice: &[u8]) -> Result<Self, binrw::Error> {
         let mut cursor = std::io::Cursor::new(slice);
@@ -77,7 +77,7 @@ impl FrameHeader {
         self.height
     }
     pub fn is_key_frame(&self) -> bool {
-        self.metadata & 0b0000_0001 != 0
+        self.flags & 0b0000_0001 != 0
     }
     pub fn is_version_valid(&self) -> bool {
         self.version == EVA_MULTIMEDIA_VERSION
