@@ -144,11 +144,17 @@ impl TryFrom<u8> for VideoFormat {
 
 impl VideoFormat {
     pub fn into_caps(self) -> gst::Caps {
+        if self == VideoFormat::Raw {
+            return Caps::builder(self.to_string())
+                .field("format", "RGB")
+                .build();
+        }
         Caps::builder(self.to_string()).build()
     }
     pub fn into_caps_with_dimensions(self, width: u32, height: u32) -> gst::Caps {
         if self == VideoFormat::Raw {
             return Caps::builder(self.to_string())
+                .field("format", "RGB")
                 .field("width", width)
                 .field("height", height)
                 .build();
