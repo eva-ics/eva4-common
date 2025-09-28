@@ -155,8 +155,8 @@ impl VideoFormat {
         if self == VideoFormat::Raw {
             return Caps::builder(self.to_string())
                 .field("format", "RGB")
-                .field("width", width)
-                .field("height", height)
+                .field("width", i32::try_from(width).unwrap_or(i32::MAX))
+                .field("height", i32::try_from(height).unwrap_or(i32::MAX))
                 .build();
         }
         Caps::builder(self.to_string()).build()
