@@ -564,7 +564,7 @@ impl Initial {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
 pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     let u = nix::unistd::User::from_name(user)
         .map_err(|e| Error::failed(format!("failed to get the system user {}: {}", user, e)))?
@@ -572,7 +572,7 @@ pub fn get_system_user(user: &str) -> EResult<nix::unistd::User> {
     Ok(u)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
 pub fn get_system_group(group: &str) -> EResult<nix::unistd::Group> {
     let g = nix::unistd::Group::from_name(group)
         .map_err(|e| Error::failed(format!("failed to get the system group {}: {}", group, e)))?
