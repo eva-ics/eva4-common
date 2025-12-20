@@ -609,6 +609,27 @@ impl Value {
         }
     }
 
+    pub fn is_true(&self) -> bool {
+        match self {
+            Value::Bool(v) => *v,
+            Value::U8(v) => *v != 0,
+            Value::U16(v) => *v != 0,
+            Value::U32(v) => *v != 0,
+            Value::U64(v) => *v != 0,
+            Value::I8(v) => *v != 0,
+            Value::I16(v) => *v != 0,
+            Value::I32(v) => *v != 0,
+            Value::I64(v) => *v != 0,
+            Value::F32(v) => *v != 0.0,
+            Value::F64(v) => *v != 0.0,
+            Value::String(v) => {
+                let v_l = v.to_lowercase();
+                v_l == "true" || v_l == "yes" || v_l == "1"
+            }
+            _ => false,
+        }
+    }
+
     pub fn to_alphanumeric_string(self) -> EResult<String> {
         match self {
             Value::Bool(v) => Ok(v.to_string()),
