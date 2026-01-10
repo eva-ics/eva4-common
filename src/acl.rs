@@ -1,9 +1,9 @@
 use crate::value::to_value;
-use crate::{is_str_any, is_str_wildcard, EResult, Error, ItemKind, Value, OID};
+use crate::{EResult, Error, ItemKind, OID, Value, is_str_any, is_str_wildcard};
 use crate::{OID_MASK_PREFIX_FORMULA, OID_MASK_PREFIX_REGEX};
-use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeSeq};
 use std::cmp::Ordering;
-use std::collections::{hash_set, HashSet};
+use std::collections::{HashSet, hash_set};
 use std::convert::TryFrom;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -524,10 +524,10 @@ impl OIDMask {
     pub fn matches(&self, oid: &OID) -> bool {
         let oid_tp = oid.kind();
         let sp = oid.full_id().split('/');
-        if let Some(mask_tp) = self.kind {
-            if mask_tp != oid_tp {
-                return false;
-            }
+        if let Some(mask_tp) = self.kind
+            && mask_tp != oid_tp
+        {
+            return false;
         }
         if self.path.matches_split(&mut sp.clone()) {
             return true;

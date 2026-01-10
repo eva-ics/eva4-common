@@ -1,8 +1,8 @@
 use crate::Error;
 use serde::{Deserialize, Deserializer, Serializer};
 use std::str::FromStr;
-use std::sync::atomic;
 use std::sync::Arc;
+use std::sync::atomic;
 use std::time::Duration;
 
 #[inline]
@@ -224,7 +224,7 @@ pub fn serialize_opt_duration_as_micros<S>(t: &Option<Duration>, s: S) -> Result
 where
     S: Serializer,
 {
-    if let Some(ref dur) = t {
+    if let Some(dur) = t {
         s.serialize_u64(dur.as_micros() as u64)
     } else {
         s.serialize_none()
@@ -244,7 +244,7 @@ pub fn serialize_opt_duration_as_nanos<S>(t: &Option<Duration>, s: S) -> Result<
 where
     S: Serializer,
 {
-    if let Some(ref dur) = t {
+    if let Some(dur) = t {
         s.serialize_u64(dur.as_nanos() as u64)
     } else {
         s.serialize_none()
@@ -255,7 +255,7 @@ pub fn serialize_opt_duration_as_f64<S>(t: &Option<Duration>, s: S) -> Result<S:
 where
     S: Serializer,
 {
-    if let Some(ref dur) = t {
+    if let Some(dur) = t {
         s.serialize_f64(dur.as_secs_f64())
     } else {
         s.serialize_none()

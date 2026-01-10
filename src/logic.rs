@@ -1,6 +1,6 @@
+use crate::Error;
 use crate::tools::default_true;
 use crate::value::Value;
-use crate::Error;
 use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
@@ -46,33 +46,25 @@ impl Range {
         }
     }
     pub fn matches(&self, val: f64) -> bool {
-        if let Some(min) = self.min {
-            if (self.min_eq && val < min) || (!self.min_eq && val <= min) {
-                return false;
-            }
+        if let Some(min) = self.min
+            && ((self.min_eq && val < min) || (!self.min_eq && val <= min))
+        {
+            return false;
         }
-        if let Some(max) = self.max {
-            if (self.max_eq && val > max) || (!self.max_eq && val >= max) {
-                return false;
-            }
+        if let Some(max) = self.max
+            && ((self.max_eq && val > max) || (!self.max_eq && val >= max))
+        {
+            return false;
         }
         true
     }
     #[inline]
     fn min_eq_sym(&self) -> &'static str {
-        if self.min_eq {
-            "<="
-        } else {
-            "<"
-        }
+        if self.min_eq { "<=" } else { "<" }
     }
     #[inline]
     fn max_eq_sym(&self) -> &'static str {
-        if self.max_eq {
-            "<="
-        } else {
-            "<"
-        }
+        if self.max_eq { "<=" } else { "<" }
     }
 }
 
@@ -162,19 +154,19 @@ impl FromStr for Range {
                             }
                             let s1_ch = c.chars().nth(vals[0].len());
                             let s2_ch = c.chars().nth(vals[0].len() + 2);
-                            if let Some(s1) = s1_ch {
-                                if let Some(s2) = s2_ch {
-                                    if s2 == '}' || s2 == '>' {
-                                        r_inspected_max = Some(vals[i - 1].parse()?);
-                                        r_inspected_max_eq = s1 == '}';
-                                        r_inspected_min = Some(vals[i + 1].parse()?);
-                                        r_inspected_min_eq = s2 == '}';
-                                    } else if s2 == '{' || s2 == '<' {
-                                        r_inspected_min = Some(vals[i - 1].parse()?);
-                                        r_inspected_min_eq = s1 == '{';
-                                        r_inspected_max = Some(vals[i + 1].parse()?);
-                                        r_inspected_max_eq = s2 == '{';
-                                    }
+                            if let Some(s1) = s1_ch
+                                && let Some(s2) = s2_ch
+                            {
+                                if s2 == '}' || s2 == '>' {
+                                    r_inspected_max = Some(vals[i - 1].parse()?);
+                                    r_inspected_max_eq = s1 == '}';
+                                    r_inspected_min = Some(vals[i + 1].parse()?);
+                                    r_inspected_min_eq = s2 == '}';
+                                } else if s2 == '{' || s2 == '<' {
+                                    r_inspected_min = Some(vals[i - 1].parse()?);
+                                    r_inspected_min_eq = s1 == '{';
+                                    r_inspected_max = Some(vals[i + 1].parse()?);
+                                    r_inspected_max_eq = s2 == '{';
                                 }
                             }
                             if r_inspected_max.unwrap() <= r_inspected_min.unwrap() {
@@ -286,7 +278,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{de_opt_range, de_range, Range};
+    use super::{Range, de_opt_range, de_range};
     use serde::Deserialize;
 
     #[test]

@@ -4,7 +4,7 @@
 //#[macro_use]
 //extern crate lazy_static;
 
-use crate::value::{to_value, Value};
+use crate::value::{Value, to_value};
 #[cfg(feature = "axum")]
 use axum::http::StatusCode;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -88,17 +88,17 @@ pub mod workers;
 pub mod value;
 
 pub mod prelude {
-    pub use crate::value::to_value;
-    pub use crate::value::Value;
-    pub use crate::value::ValueOption;
-    pub use crate::value::ValueOptionOwned;
     pub use crate::EResult;
     pub use crate::Error;
     pub use crate::ErrorKind;
+    pub use crate::IEID;
     pub use crate::ItemKind;
     pub use crate::ItemStatus;
-    pub use crate::IEID;
     pub use crate::OID;
+    pub use crate::value::Value;
+    pub use crate::value::ValueOption;
+    pub use crate::value::ValueOptionOwned;
+    pub use crate::value::to_value;
 }
 
 static ERR_INVALID_OID: &str = "Invalid OID format";
@@ -1086,7 +1086,7 @@ impl TryFrom<Value> for Vec<ItemKind> {
 #[cfg(test)]
 mod tests {
     use super::to_value;
-    use super::{Error, ItemKind, Value, IEID, OID};
+    use super::{Error, IEID, ItemKind, OID, Value};
     use std::convert::TryInto;
 
     #[test]

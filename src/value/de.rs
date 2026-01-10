@@ -54,7 +54,7 @@ impl From<de::Unexpected<'_>> for Unexpected {
 }
 
 impl Unexpected {
-    pub fn to_unexpected(&self) -> de::Unexpected {
+    pub fn to_unexpected(&self) -> de::Unexpected<'_> {
         match *self {
             Unexpected::Bool(v) => de::Unexpected::Bool(v),
             Unexpected::Unsigned(v) => de::Unexpected::Unsigned(v),
@@ -149,7 +149,7 @@ impl DeserializerError {
 }
 
 impl Error for DeserializerError {
-    fn description(&self) -> &str {
+    fn description(&self) -> &'static str {
         "Value deserializer error"
     }
 }

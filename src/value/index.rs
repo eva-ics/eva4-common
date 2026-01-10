@@ -1,5 +1,5 @@
 use crate::value::Value;
-use serde::{de, ser, ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser, ser::SerializeSeq};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Index(Vec<usize>);

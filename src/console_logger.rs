@@ -1,7 +1,7 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
-static CONSOLE_LOG_NO_TIMESTAMP: Lazy<bool> =
-    Lazy::new(|| std::env::var("EVA_CONSOLE_LOG_NO_TIMESTAMP").map_or(false, |v| v == "1"));
+static CONSOLE_LOG_NO_TIMESTAMP: LazyLock<bool> =
+    LazyLock::new(|| std::env::var("EVA_CONSOLE_LOG_NO_TIMESTAMP").is_ok_and(|v| v == "1"));
 
 #[inline]
 pub fn console_log_with_timestamp() -> bool {

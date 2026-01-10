@@ -19,7 +19,7 @@ impl fmt::Display for SerializerError {
 }
 
 impl Error for SerializerError {
-    fn description(&self) -> &str {
+    fn description(&self) -> &'static str {
         "Value serializer error"
     }
 }

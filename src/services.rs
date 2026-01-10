@@ -1,9 +1,7 @@
-use crate::registry;
 use crate::Value;
+use crate::registry;
 use crate::{EResult, Error};
 use busrt::rpc::{self, RpcClient, RpcHandlers};
-#[cfg(all(feature = "openssl3", feature = "fips"))]
-use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[cfg(target_os = "linux")]
@@ -12,7 +10,7 @@ use std::fmt;
 #[cfg(feature = "extended-value")]
 use std::path::Path;
 use std::sync::atomic;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 pub const SERVICE_CONFIG_VERSION: u16 = 4;
@@ -20,33 +18,24 @@ pub const SERVICE_CONFIG_VERSION: u16 = 4;
 pub const SERVICE_PAYLOAD_PING: u8 = 0;
 pub const SERVICE_PAYLOAD_INITIAL: u8 = 1;
 
-#[cfg(all(feature = "openssl3", feature = "fips"))]
 #[allow(dead_code)]
-static FIPS_LOADED: OnceCell<()> = OnceCell::new();
+static FIPS_LOADED: OnceLock<()> = OnceLock::new();
 
-#[cfg(any(
-    feature = "openssl-vendored",
-    feature = "openssl-no-fips",
-    not(feature = "fips")
-))]
+#[cfg(any(feature = "openssl-vendored", not(feature = "fips")))]
 pub fn enable_fips() -> EResult<()> {
     Err(Error::failed(
         "FIPS can not be enabled, consider using a native OS distribution",
     ))
 }
 
-#[cfg(not(any(feature = "openssl-vendored", feature = "openssl-no-fips")))]
-#[cfg(feature = "fips")]
+#[cfg(all(not(feature = "openssl-vendored"), feature = "fips"))]
 pub fn enable_fips() -> EResult<()> {
-    #[cfg(feature = "openssl3")]
     {
         FIPS_LOADED
             .set(())
             .map_err(|_| Error::core("FIPS provided already loaded"))?;
         std::mem::forget(openssl::provider::Provider::load(None, "fips")?);
     }
-    #[cfg(not(feature = "openssl3"))]
-    openssl::fips::enable(true)?;
     Ok(())
 }
 
@@ -218,7 +207,7 @@ impl Initial {
     }
     #[inline]
     pub fn init(&self) -> EResult<()> {
-        #[cfg(feature = "openssl-no-fips")]
+        #[cfg(any(feature = "openssl-vendored", feature = "fips"))]
         if self.fips {
             return Err(Error::not_implemented(
                 "no FIPS 140 support, disable FIPS or switch to native package",
@@ -267,10 +256,10 @@ impl Initial {
     }
     #[inline]
     pub fn data_path(&self) -> Option<&str> {
-        if let Some(ref user) = self.user {
-            if user == "nobody" {
-                return None;
-            }
+        if let Some(ref user) = self.user
+            && user == "nobody"
+        {
+            return None;
         }
         Some(&self.data_path)
     }

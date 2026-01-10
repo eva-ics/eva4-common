@@ -1,10 +1,10 @@
 use crate::payload::{pack, unpack};
 use crate::{EResult, Error};
 use log::{error, trace};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteSynchronous},
     ConnectOptions, Pool, Sqlite,
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteSynchronous},
 };
 use std::str::FromStr;
 use std::time::Duration;
@@ -42,11 +42,10 @@ impl TtlCache {
         timeout: Duration,
         pool_size: u32,
     ) -> EResult<Self> {
-        let mut connection_options = SqliteConnectOptions::from_str(&format!("sqlite://{path}"))?
+        let connection_options = SqliteConnectOptions::from_str(&format!("sqlite://{path}"))?
             .create_if_missing(true)
             .synchronous(SqliteSynchronous::Extra)
-            .busy_timeout(timeout);
-        connection_options
+            .busy_timeout(timeout)
             .log_statements(log::LevelFilter::Trace)
             .log_slow_statements(log::LevelFilter::Warn, Duration::from_secs(2));
         let pool = SqlitePoolOptions::new()

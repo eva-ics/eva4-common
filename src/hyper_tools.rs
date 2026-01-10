@@ -1,6 +1,6 @@
-use crate::value::{to_value, Value};
 use crate::ErrorKind;
-use hyper::{http, Body, HeaderMap, Response, StatusCode};
+use crate::value::{Value, to_value};
+use hyper::{Body, HeaderMap, Response, StatusCode, http};
 use serde::Serialize;
 use std::error::Error;
 

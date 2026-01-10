@@ -1,11 +1,11 @@
+use crate::OID;
 use crate::events::NodeInfo;
 use crate::value::Value;
-use crate::OID;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use serde::{Deserialize, Deserializer, Serialize};
-use std::sync::atomic;
 use std::sync::Arc;
+use std::sync::atomic;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -174,7 +174,7 @@ where
         }
     }
     pub fn shuffle(&mut self) {
-        if let ValueOrList::Multiple(ref mut v) = self {
+        if let ValueOrList::Multiple(v) = self {
             v.shuffle(&mut thread_rng());
         }
     }

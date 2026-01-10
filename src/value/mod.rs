@@ -57,11 +57,7 @@ const ERR_TOO_SMALL_NUMBER: &str = "Value too small";
 
 macro_rules! float_from_bool {
     ($v: expr) => {
-        if $v {
-            1.0
-        } else {
-            0.0
-        }
+        if $v { 1.0 } else { 0.0 }
     };
 }
 
@@ -86,7 +82,7 @@ impl ValueOptionOwned {
     pub fn as_ref(&self) -> Option<&Value> {
         match self {
             ValueOptionOwned::No => None,
-            ValueOptionOwned::Value(ref v) => Some(v),
+            ValueOptionOwned::Value(v) => Some(v),
         }
     }
 }
@@ -326,19 +322,19 @@ impl fmt::Display for Value {
             Value::F32(v) => write!(f, "{}", v),
             Value::F64(v) => write!(f, "{}", v),
             Value::Char(v) => write!(f, "{}", v),
-            Value::String(ref v) => write!(f, "{}", v),
+            Value::String(v) => write!(f, "{}", v),
             Value::Unit => write!(f, ""),
-            Value::Option(ref v) => {
+            Value::Option(v) => {
                 if let Some(val) = v {
                     write!(f, "{}", val)
                 } else {
                     write!(f, "")
                 }
             }
-            Value::Newtype(ref v) => write!(f, "{}", v),
-            Value::Seq(ref v) => write!(f, "{:?}", v),
-            Value::Map(ref v) => write!(f, "{:?}", v),
-            Value::Bytes(ref v) => write!(f, "{:?}", v),
+            Value::Newtype(v) => write!(f, "{}", v),
+            Value::Seq(v) => write!(f, "{:?}", v),
+            Value::Map(v) => write!(f, "{:?}", v),
+            Value::Bytes(v) => write!(f, "{:?}", v),
         }
     }
 }
@@ -431,7 +427,7 @@ impl Ord for Value {
             (&Value::Unit, &Value::Unit) => Ordering::Equal,
             (Value::Option(v0), Value::Option(v1)) => v0.cmp(v1),
             (Value::Newtype(v0), Value::Newtype(v1)) => v0.cmp(v1),
-            (Value::Seq(ref v0), Value::Seq(v1)) => v0.cmp(v1),
+            (Value::Seq(v0), Value::Seq(v1)) => v0.cmp(v1),
             (Value::Map(v0), Value::Map(v1)) => v0.cmp(v1),
             (Value::Bytes(v0), Value::Bytes(v1)) => v0.cmp(v1),
             (v0, v1) => v0.discriminant().cmp(&v1.discriminant()),
@@ -524,7 +520,7 @@ impl Value {
         if idx.0.is_empty() {
             return Some(self);
         }
-        if let Value::Seq(ref s) = self {
+        if let Value::Seq(s) = self {
             if let Some(s) = s.get(idx.0[0]) {
                 return s.get_by_index_slice(IndexSlice(&idx.0[1..]));
             }
@@ -679,10 +675,10 @@ impl Value {
     }
 
     pub fn unpack(self) -> EResult<Self> {
-        if let Value::String(ref v) = self {
-            if let Some(s) = v.strip_prefix("!!") {
-                return serde_json::from_str(s).map_err(Into::into);
-            }
+        if let Value::String(ref v) = self
+            && let Some(s) = v.strip_prefix("!!")
+        {
+            return serde_json::from_str(s).map_err(Into::into);
         }
         Ok(self)
     }
@@ -711,7 +707,7 @@ impl Value {
         }
     }
 
-    fn unexpected(&self) -> serde::de::Unexpected {
+    fn unexpected(&self) -> serde::de::Unexpected<'_> {
         match *self {
             Value::Bool(b) => serde::de::Unexpected::Bool(b),
             Value::U8(n) => serde::de::Unexpected::Unsigned(u64::from(n)),

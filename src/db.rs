@@ -10,23 +10,18 @@
 /// Postgres
 #[cfg(feature = "acl")]
 use crate::acl::OIDMask;
-use crate::{value::Value, EResult, Error, OID};
-use once_cell::sync::OnceCell;
+use crate::{OID, value::Value};
 use sqlx::encode::IsNull;
 use sqlx::error::BoxDynError;
-use sqlx::postgres::{self, PgConnectOptions, PgPool, PgPoolOptions};
-use sqlx::sqlite::{self, SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-use sqlx::{database, ConnectOptions, Database, Decode, Encode};
+use sqlx::postgres;
+use sqlx::postgres::PgValueRef;
+use sqlx::sqlite;
+use sqlx::sqlite::SqliteValueRef;
+use sqlx::{Decode, Encode};
 use sqlx::{Postgres, Sqlite, Type};
 use std::borrow::Cow;
-use std::str::FromStr;
-use std::time::Duration;
 
-pub mod prelude {
-    pub use super::{db_init, db_pool, DbKind, DbPool, Transaction};
-}
-
-static DB_POOL: OnceCell<DbPool> = OnceCell::new();
+type ResultIsNull = Result<IsNull, Box<dyn std::error::Error + Send + Sync + 'static>>;
 
 impl Type<Sqlite> for OID {
     fn type_info() -> sqlite::SqliteTypeInfo {
@@ -55,29 +50,33 @@ impl postgres::PgHasArrayType for OID {
     }
 }
 
-impl<'r, DB: Database> Decode<'r, DB> for OID
-where
-    &'r str: Decode<'r, DB>,
-{
-    fn decode(value: <DB as database::HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
-        let value = <&str as Decode<DB>>::decode(value)?;
+impl<'r> Decode<'r, Sqlite> for OID {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
+        let value = <&str as Decode<Sqlite>>::decode(value)?;
+        value.parse().map_err(Into::into)
+    }
+}
+
+impl<'r> Decode<'r, Postgres> for OID {
+    fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
+        let value = <&str as Decode<Postgres>>::decode(value)?;
         value.parse().map_err(Into::into)
     }
 }
 
 impl<'q> Encode<'q, Sqlite> for OID {
-    fn encode(self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode(self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> ResultIsNull {
         args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
             self.to_string(),
         )));
 
-        IsNull::No
+        Ok(IsNull::No)
     }
-    fn encode_by_ref(&self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode_by_ref(&self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> ResultIsNull {
         args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
             self.to_string(),
         )));
-        IsNull::No
+        Ok(IsNull::No)
     }
 
     fn size_hint(&self) -> usize {
@@ -86,7 +85,7 @@ impl<'q> Encode<'q, Sqlite> for OID {
 }
 
 impl Encode<'_, Postgres> for OID {
-    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
+    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> ResultIsNull {
         <&str as Encode<Postgres>>::encode(self.as_str(), buf)
     }
     fn size_hint(&self) -> usize {
@@ -125,37 +124,42 @@ impl postgres::PgHasArrayType for OIDMask {
 }
 
 #[cfg(feature = "acl")]
-impl<'r, DB: Database> Decode<'r, DB> for OIDMask
-where
-    &'r str: Decode<'r, DB>,
-{
-    fn decode(value: <DB as database::HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
-        let value = <&str as Decode<DB>>::decode(value)?;
+impl<'r> Decode<'r, Sqlite> for OIDMask {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
+        let value = <&str as Decode<Sqlite>>::decode(value)?;
+        value.parse().map_err(Into::into)
+    }
+}
+
+#[cfg(feature = "acl")]
+impl<'r> Decode<'r, Postgres> for OIDMask {
+    fn decode(value: PgValueRef<'r>) -> Result<Self, BoxDynError> {
+        let value = <&str as Decode<Postgres>>::decode(value)?;
         value.parse().map_err(Into::into)
     }
 }
 
 #[cfg(feature = "acl")]
 impl<'q> Encode<'q, Sqlite> for OIDMask {
-    fn encode(self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode(self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> ResultIsNull {
         args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
             self.to_string(),
         )));
 
-        IsNull::No
+        Ok(IsNull::No)
     }
-    fn encode_by_ref(&self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode_by_ref(&self, args: &mut Vec<sqlite::SqliteArgumentValue<'q>>) -> ResultIsNull {
         args.push(sqlite::SqliteArgumentValue::Text(Cow::Owned(
             self.to_string(),
         )));
-        IsNull::No
+        Ok(IsNull::No)
     }
 }
 
 #[cfg(feature = "acl")]
 impl Encode<'_, Postgres> for OIDMask {
     #[allow(clippy::needless_borrows_for_generic_args)]
-    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
+    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> ResultIsNull {
         <&str as Encode<Postgres>>::encode(&self.to_string(), buf)
     }
 }
@@ -177,7 +181,7 @@ impl Type<Postgres> for Value {
 }
 
 impl Encode<'_, Sqlite> for Value {
-    fn encode_by_ref(&self, buf: &mut Vec<sqlite::SqliteArgumentValue<'_>>) -> IsNull {
+    fn encode_by_ref(&self, buf: &mut Vec<sqlite::SqliteArgumentValue<'_>>) -> ResultIsNull {
         let json_string_value =
             serde_json::to_string(self).expect("serde_json failed to convert to string");
         Encode::<Sqlite>::encode(json_string_value, buf)
@@ -193,11 +197,11 @@ impl<'r> Decode<'r, Sqlite> for Value {
 }
 
 impl Encode<'_, Postgres> for Value {
-    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> IsNull {
+    fn encode_by_ref(&self, buf: &mut postgres::PgArgumentBuffer) -> ResultIsNull {
         buf.push(1);
         serde_json::to_writer(&mut **buf, &self)
             .expect("failed to serialize to JSON for encoding on transmission to the database");
-        IsNull::No
+        Ok(IsNull::No)
     }
 }
 
@@ -211,10 +215,11 @@ impl<'r> Decode<'r, Postgres> for Value {
 
 #[cfg(feature = "time")]
 mod time_impl {
+    use super::ResultIsNull;
     use crate::time::Time;
     use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef};
     use sqlx::sqlite::{SqliteArgumentValue, SqliteTypeInfo, SqliteValueRef};
-    use sqlx::{encode::IsNull, error::BoxDynError, Decode, Encode, Postgres, Sqlite, Type};
+    use sqlx::{Decode, Encode, Postgres, Sqlite, Type, encode::IsNull, error::BoxDynError};
 
     const J2000_EPOCH_US: i64 = 946_684_800_000_000;
 
@@ -232,12 +237,12 @@ mod time_impl {
     }
 
     impl<'q> Encode<'q, Sqlite> for Time {
-        fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
+        fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> ResultIsNull {
             args.push(SqliteArgumentValue::Int64(
                 i64::try_from(self.timestamp_ns()).expect("timestamp too large"),
             ));
 
-            IsNull::No
+            Ok(IsNull::No)
         }
     }
 
@@ -260,7 +265,7 @@ mod time_impl {
     }
 
     impl Encode<'_, Postgres> for Time {
-        fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+        fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> ResultIsNull {
             let us =
                 i64::try_from(self.timestamp_us()).expect("timestamp too large") - J2000_EPOCH_US;
             Encode::<Postgres>::encode(us, buf)
@@ -278,126 +283,5 @@ mod time_impl {
                 (us + J2000_EPOCH_US).try_into().unwrap_or_default(),
             ))
         }
-    }
-}
-
-/// # Panics
-///
-/// Will panic if not initialized
-#[allow(clippy::module_name_repetitions)]
-#[inline]
-pub fn db_pool() -> &'static DbPool {
-    DB_POOL.get().unwrap()
-}
-
-#[allow(clippy::module_name_repetitions)]
-pub enum DbPool {
-    Sqlite(SqlitePool),
-    Postgres(PgPool),
-}
-
-#[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum DbKind {
-    Sqlite,
-    Postgres,
-}
-
-impl DbPool {
-    pub async fn begin(&self) -> Result<Transaction<'_>, sqlx::Error> {
-        match self {
-            DbPool::Sqlite(p) => Ok(Transaction::Sqlite(p.begin().await?)),
-            DbPool::Postgres(p) => Ok(Transaction::Postgres(p.begin().await?)),
-        }
-    }
-    pub fn kind(&self) -> DbKind {
-        match self {
-            DbPool::Sqlite(_) => DbKind::Sqlite,
-            DbPool::Postgres(_) => DbKind::Postgres,
-        }
-    }
-    pub async fn execute(&self, q: &str) -> EResult<()> {
-        match self {
-            DbPool::Sqlite(ref p) => {
-                sqlx::query(q).execute(p).await?;
-            }
-            DbPool::Postgres(ref p) => {
-                sqlx::query(q).execute(p).await?;
-            }
-        }
-        Ok(())
-    }
-}
-
-pub enum Transaction<'c> {
-    Sqlite(sqlx::Transaction<'c, sqlx::sqlite::Sqlite>),
-    Postgres(sqlx::Transaction<'c, sqlx::postgres::Postgres>),
-}
-
-impl<'c> Transaction<'c> {
-    pub async fn commit(self) -> Result<(), sqlx::Error> {
-        match self {
-            Transaction::Sqlite(tx) => tx.commit().await,
-            Transaction::Postgres(tx) => tx.commit().await,
-        }
-    }
-    pub fn kind(&self) -> DbKind {
-        match self {
-            Transaction::Sqlite(_) => DbKind::Sqlite,
-            Transaction::Postgres(_) => DbKind::Postgres,
-        }
-    }
-    pub async fn execute(&mut self, q: &str) -> EResult<()> {
-        match self {
-            Transaction::Sqlite(ref mut p) => {
-                sqlx::query(q).execute(p).await?;
-            }
-            Transaction::Postgres(ref mut p) => {
-                sqlx::query(q).execute(p).await?;
-            }
-        }
-        Ok(())
-    }
-}
-
-/// Initialize database, must be called first and only once,
-/// enables module-wide pool
-#[allow(clippy::module_name_repetitions)]
-pub async fn db_init(conn: &str, pool_size: u32, timeout: Duration) -> EResult<()> {
-    DB_POOL
-        .set(create_pool(conn, pool_size, timeout).await?)
-        .map_err(|_| Error::core("unable to set DB_POOL"))?;
-    Ok(())
-}
-
-/// Creates a pool to use it without the module
-pub async fn create_pool(conn: &str, pool_size: u32, timeout: Duration) -> EResult<DbPool> {
-    if conn.starts_with("sqlite://") {
-        let mut opts = SqliteConnectOptions::from_str(conn)?
-            .create_if_missing(true)
-            .synchronous(sqlx::sqlite::SqliteSynchronous::Extra)
-            .busy_timeout(timeout);
-        opts.log_statements(log::LevelFilter::Trace)
-            .log_slow_statements(log::LevelFilter::Warn, timeout);
-        Ok(DbPool::Sqlite(
-            SqlitePoolOptions::new()
-                .max_connections(pool_size)
-                .acquire_timeout(timeout)
-                .connect_with(opts)
-                .await?,
-        ))
-    } else if conn.starts_with("postgres://") {
-        let mut opts = PgConnectOptions::from_str(conn)?;
-        opts.log_statements(log::LevelFilter::Trace)
-            .log_slow_statements(log::LevelFilter::Warn, timeout);
-        Ok(DbPool::Postgres(
-            PgPoolOptions::new()
-                .max_connections(pool_size)
-                .acquire_timeout(timeout)
-                .connect_with(opts)
-                .await?,
-        ))
-    } else {
-        Err(Error::unsupported("Unsupported database kind"))
     }
 }

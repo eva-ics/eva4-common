@@ -1,6 +1,6 @@
 use crate::EResult;
 use crate::{Error, ErrorKind};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use tokio::sync::{Mutex, Notify};
 
@@ -40,10 +40,8 @@ impl From<bmart::Error> for Error {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref WORKERS: Mutex<bmart::workers::WorkerFactory> =
-        Mutex::new(bmart::workers::WorkerFactory::new());
-}
+static WORKERS: LazyLock<Mutex<bmart::workers::WorkerFactory>> =
+    LazyLock::new(|| Mutex::new(bmart::workers::WorkerFactory::new()));
 
 /// # Errors
 ///

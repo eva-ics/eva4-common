@@ -1,4 +1,4 @@
-use crate::{value::Value, EResult, Error, OID};
+use crate::{EResult, Error, OID, value::Value};
 use std::{
     borrow::Borrow,
     collections::{BTreeMap, BTreeSet},
@@ -101,7 +101,7 @@ fn parse_value_by_kind(
             }
             Value::Seq(values)
         }
-        Kind::DataObject(ref s) => {
+        Kind::DataObject(s) => {
             if let Some(object) = map.get(s) {
                 let mut values = BTreeMap::new();
                 for field in &object.fields {
@@ -147,7 +147,7 @@ impl ObjectMap {
             }
             match field.kind {
                 Kind::Array(_, ref k) => {
-                    if let Kind::DataObject(ref s) = k.as_ref() {
+                    if let Kind::DataObject(s) = k.as_ref() {
                         self.mapped_oids_recursive(s, oids);
                     }
                 }
@@ -213,23 +213,20 @@ impl ObjectMap {
                 buf.set_position(pos);
             }
             match kind {
-                Kind::Array(n, ref k) => {
-                    if let Kind::DataObject(ref s) = k.as_ref() {
+                Kind::Array(n, k) => {
+                    if let Kind::DataObject(s) = k.as_ref() {
                         for _ in 0..*n {
                             self.parse_values_recursive(buf, s, map, values, endianess)?;
                         }
                     } else {
                         buf.set_position(buf.position() + u64::try_from(self.kind_size(kind)?)?);
                     }
-                    continue;
                 }
-                Kind::DataObject(ref s) => {
+                Kind::DataObject(s) => {
                     self.parse_values_recursive(buf, s, map, values, endianess)?;
-                    continue;
                 }
                 _ => {
                     buf.set_position(buf.position() + u64::try_from(self.kind_size(kind)?)?);
-                    continue;
                 }
             }
         }
@@ -257,13 +254,13 @@ impl ObjectMap {
                 let k_size = self.kind_size(k)?;
                 Ok(n * k_size)
             }
-            Kind::DataObject(ref s) => self.size_of(s),
+            Kind::DataObject(s) => self.size_of(s),
         }
     }
     fn validate_kind<'a>(&self, kind: &'a Kind, invalid_objects: &mut BTreeSet<&'a Name>) {
         match kind {
-            Kind::Array(_, ref k) => self.validate_kind(k, invalid_objects),
-            Kind::DataObject(ref s) => {
+            Kind::Array(_, k) => self.validate_kind(k, invalid_objects),
+            Kind::DataObject(s) => {
                 if !self.objects.contains_key(s) {
                     invalid_objects.insert(s);
                 }

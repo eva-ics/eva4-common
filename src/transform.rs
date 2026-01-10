@@ -6,14 +6,14 @@
     clippy::cast_precision_loss
 )]
 
-use lazy_static::lazy_static;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ops::{Add, Sub};
+use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
-use crate::value::{to_value, Value};
+use crate::value::{Value, to_value};
 use crate::{EResult, Error, OID};
 
 #[derive(Deserialize, Debug)]
@@ -59,9 +59,7 @@ struct ValSpeedInfo {
     t: Instant,
 }
 
-lazy_static! {
-    static ref SPEED_INFO: Mutex<HashMap<OID, ValSpeedInfo>> = <_>::default();
-}
+static SPEED_INFO: LazyLock<Mutex<HashMap<OID, ValSpeedInfo>>> = LazyLock::new(<_>::default);
 
 fn calculate_growth_speed<T>(oid: &OID, value: T, maxval: T, interval: f64) -> EResult<Option<f64>>
 where
@@ -150,7 +148,7 @@ fn round_to(value: f64, digits: f64) -> EResult<f64> {
         d if d < 0.0 => Err(Error::invalid_params(
             "round digits can not be less than zero",
         )),
-        d if d == 0.0 => Ok(value.round()),
+        0.0 => Ok(value.round()),
         d if d < 20.0 => {
             let m: f64 = (10_u64).pow(digits as u32) as f64;
             Ok(value.round() + (value.fract() * m).round() / m)

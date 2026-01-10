@@ -1,14 +1,12 @@
 use crate::events::{LOG_CALL_TRACE_TOPIC, LOG_INPUT_TOPIC};
 use crate::payload::pack;
 use crate::{EResult, Error};
-use busrt::client::AsyncClient;
 use busrt::QoS;
-use lazy_static::lazy_static;
+use busrt::client::AsyncClient;
 use log::{Level, LevelFilter, Log};
-use once_cell::sync::OnceCell;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock, OnceLock};
 use std::time::Duration;
 use std::time::Instant;
 use uuid::Uuid;
@@ -25,22 +23,20 @@ pub struct TraceMessage {
     msg: Arc<String>,
 }
 
-lazy_static! {
-    static ref LOG_TOPICS: HashMap<Level, String> = {
-        let mut topics = HashMap::new();
-        topics.insert(Level::Trace, format!("{}{}", LOG_INPUT_TOPIC, "trace"));
-        topics.insert(Level::Debug, format!("{}{}", LOG_INPUT_TOPIC, "debug"));
-        topics.insert(Level::Info, format!("{}{}", LOG_INPUT_TOPIC, "info"));
-        topics.insert(Level::Warn, format!("{}{}", LOG_INPUT_TOPIC, "warn"));
-        topics.insert(Level::Error, format!("{}{}", LOG_INPUT_TOPIC, "error"));
-        topics
-    };
-    static ref LOG_TX: OnceCell<async_channel::Sender<(log::Level, Arc<String>)>> = <_>::default();
-    static ref TRACE_TX: OnceCell<async_channel::Sender<(TraceMessage, Uuid)>> = <_>::default();
-}
+static LOG_TOPICS: LazyLock<HashMap<Level, String>> = LazyLock::new(|| {
+    let mut topics = HashMap::new();
+    topics.insert(Level::Trace, format!("{}{}", LOG_INPUT_TOPIC, "trace"));
+    topics.insert(Level::Debug, format!("{}{}", LOG_INPUT_TOPIC, "debug"));
+    topics.insert(Level::Info, format!("{}{}", LOG_INPUT_TOPIC, "info"));
+    topics.insert(Level::Warn, format!("{}{}", LOG_INPUT_TOPIC, "warn"));
+    topics.insert(Level::Error, format!("{}{}", LOG_INPUT_TOPIC, "error"));
+    topics
+});
+static LOG_TX: OnceLock<async_channel::Sender<(log::Level, Arc<String>)>> = OnceLock::new();
+static TRACE_TX: OnceLock<async_channel::Sender<(TraceMessage, Uuid)>> = OnceLock::new();
 
 static BUS_LOGGER: BusLogger = BusLogger {
-    log_filter: OnceCell::new(),
+    log_filter: OnceLock::new(),
     prev_message: parking_lot::Mutex::new(None),
 };
 
@@ -51,7 +47,7 @@ struct LogMessage {
 }
 
 struct BusLogger {
-    log_filter: OnceCell<LevelFilter>,
+    log_filter: OnceLock<LevelFilter>,
     prev_message: parking_lot::Mutex<Option<LogMessage>>,
 }
 
@@ -73,16 +69,16 @@ impl Log for BusLogger {
                 }};
             }
             let trid: Option<Uuid> = CALL_TRACE_ID.try_with(Clone::clone).unwrap_or_default();
-            if let Some(trace_id) = trid {
-                if let Some(tx) = TRACE_TX.get() {
-                    let _r = tx.try_send((
-                        TraceMessage {
-                            l: crate::log_level_code(record.level()),
-                            msg: format_msg!(),
-                        },
-                        trace_id,
-                    ));
-                }
+            if let Some(trace_id) = trid
+                && let Some(tx) = TRACE_TX.get()
+            {
+                let _r = tx.try_send((
+                    TraceMessage {
+                        l: crate::log_level_code(record.level()),
+                        msg: format_msg!(),
+                    },
+                    trace_id,
+                ));
             }
             if let Some(tx) = LOG_TX.get() {
                 let level = record.level();
@@ -91,13 +87,12 @@ impl Log for BusLogger {
                     {
                         let mut prev = self.prev_message.lock();
                         // ignore messages wich repeat too fast
-                        if let Some(p) = prev.as_mut() {
-                            if p.level == level
-                                && p.message == msg
-                                && p.t.elapsed() < MSG_MAX_REPEAT_DELAY
-                            {
-                                return;
-                            }
+                        if let Some(p) = prev.as_mut()
+                            && p.level == level
+                            && p.message == msg
+                            && p.t.elapsed() < MSG_MAX_REPEAT_DELAY
+                        {
+                            return;
                         }
                         prev.replace(LogMessage {
                             level,

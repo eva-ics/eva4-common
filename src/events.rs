@@ -1,7 +1,7 @@
 use crate::acl::OIDMaskList;
 use crate::value::{Value, ValueOption, ValueOptionOwned};
 use crate::{EResult, Error};
-use crate::{ItemStatus, IEID, OID};
+use crate::{IEID, ItemStatus, OID};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -214,7 +214,7 @@ pub enum OnModified<'a> {
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum OnModifiedOwned {
-    SetOther(OnModifiedSetOwned),
+    SetOther(Box<OnModifiedSetOwned>),
     SetOtherValueDelta(OnModifiedValueDeltaOwned),
 }
 

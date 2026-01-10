@@ -6,6 +6,9 @@ use std::fmt::Debug;
 use std::fmt::Display;
 use std::num::ParseIntError;
 
+use nom::AsChar;
+use nom::Finish;
+use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete::escaped_transform;
 use nom::bytes::complete::is_not;
@@ -26,14 +29,11 @@ use nom::combinator::verify;
 use nom::sequence::delimited;
 use nom::sequence::pair;
 use nom::sequence::tuple;
-use nom::AsChar;
-use nom::Finish;
-use nom::IResult;
 use num_traits::Num;
 use remain::sorted;
-use serde::de;
 use serde::Deserialize;
 use serde::Deserializer;
+use serde::de;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -138,7 +138,7 @@ fn any_separator(s: &str) -> IResult<&str, Option<char>> {
 ///
 /// The returned value is a slice into the current input if no characters to unescape were met,
 /// or a fully owned string if we had to unescape some characters.
-fn any_string(s: &str) -> IResult<&str, Cow<str>> {
+fn any_string(s: &str) -> IResult<&str, Cow<'_, str>> {
     // Double-quoted strings may escape " and \ characters. Since escaped strings are modified,
     // we need to return an owned `String` instead of just a slice in the input string.
     let double_quoted = delimited(
@@ -185,7 +185,7 @@ where
     //
     // We move this non-generic part into its own function so it doesn't get monomorphized, which
     // would increase the binary size more than needed.
-    fn parse_number(s: &str) -> IResult<&str, (Cow<str>, u32)> {
+    fn parse_number(s: &str) -> IResult<&str, (Cow<'_, str>, u32)> {
         // Recognizes the sign prefix.
         let sign = char('-');
 

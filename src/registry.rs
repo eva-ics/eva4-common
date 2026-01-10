@@ -1,8 +1,8 @@
 use crate::err_logger;
 use crate::payload::{pack, unpack};
 use crate::prelude::*;
-use busrt::rpc::{Rpc, RpcClient};
 use busrt::QoS;
+use busrt::rpc::{Rpc, RpcClient};
 use serde::{Deserialize, Serialize};
 
 err_logger!();
@@ -108,7 +108,7 @@ pub async fn key_increment(prefix: &str, key: &str, rpc: &RpcClient) -> EResult<
     let payload = PayloadKey {
         key: format_key(prefix, key),
     };
-    TryInto::<i64>::try_into(call("key_increment", payload, rpc).await?).map_err(Into::into)
+    TryInto::<i64>::try_into(call("key_increment", payload, rpc).await?)
 }
 
 #[inline]
@@ -116,7 +116,7 @@ pub async fn key_decrement(prefix: &str, key: &str, rpc: &RpcClient) -> EResult<
     let payload = PayloadKey {
         key: format_key(prefix, key),
     };
-    TryInto::<i64>::try_into(call("key_decrement", payload, rpc).await?).map_err(Into::into)
+    TryInto::<i64>::try_into(call("key_decrement", payload, rpc).await?)
 }
 
 #[inline]
