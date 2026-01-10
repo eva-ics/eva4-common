@@ -872,7 +872,8 @@ async fn extend_string_value(val: String, op: &crate::op::Op, base: &Path) -> ER
                 let mut path = base.to_path_buf();
                 path.push(fname);
                 let content = tokio::time::timeout(op.timeout()?, tokio::fs::read(path)).await??;
-                let val: Value = serde_yaml::from_slice(&content).map_err(Error::invalid_data)?;
+                let val: Value = serde_yaml::from_str(std::str::from_utf8(&content)?)
+                    .map_err(Error::invalid_data)?;
                 Ok(val)
             }
             "include-text" => {
