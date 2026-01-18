@@ -340,11 +340,15 @@ impl Initial {
     #[inline]
     pub fn bus_config(&self) -> EResult<busrt::ipc::Config> {
         if self.bus.tp == "native" {
-            Ok(busrt::ipc::Config::new(&self.bus.path, &self.id)
+            let mut bus_config = busrt::ipc::Config::new(&self.bus.path, &self.id)
                 .buf_size(self.bus.buf_size)
                 .buf_ttl(Duration::from_micros(self.bus.buf_ttl))
                 .queue_size(self.bus.queue_size)
-                .timeout(self.bus_timeout()))
+                .timeout(self.bus_timeout());
+            if let Some(ref token) = self.bus.token {
+                bus_config = bus_config.token(token);
+            }
+            Ok(bus_config)
         } else {
             Err(Error::not_implemented(format!(
                 "bus type {} is not supported",
@@ -665,6 +669,7 @@ pub struct BusConfig {
     // deprecated field, as BUS/RT RPC uses timeout as a ping interval
     #[serde(rename = "ping_interval", skip_serializing, default)]
     _ping_interval: f64,
+    token: Option<String>,
 }
 
 impl BusConfig {
