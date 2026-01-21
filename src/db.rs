@@ -10,18 +10,29 @@
 /// Postgres
 #[cfg(feature = "acl")]
 use crate::acl::OIDMask;
+use crate::{EResult, Error};
 use crate::{OID, value::Value};
+use sqlx::ConnectOptions;
 use sqlx::encode::IsNull;
 use sqlx::error::BoxDynError;
-use sqlx::postgres;
-use sqlx::postgres::PgValueRef;
-use sqlx::sqlite;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgValueRef};
 use sqlx::sqlite::SqliteValueRef;
+use sqlx::sqlite::{self, SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{Decode, Encode};
+use sqlx::{PgPool, SqlitePool, postgres};
 use sqlx::{Postgres, Sqlite, Type};
 use std::borrow::Cow;
+use std::str::FromStr as _;
+use std::sync::OnceLock;
+use std::time::Duration;
+
+pub mod prelude {
+    pub use super::{DbKind, DbPool, Transaction, db_init, db_pool};
+}
 
 type ResultIsNull = Result<IsNull, Box<dyn std::error::Error + Send + Sync + 'static>>;
+
+static DB_POOL: OnceLock<DbPool> = OnceLock::new();
 
 impl Type<Sqlite> for OID {
     fn type_info() -> sqlite::SqliteTypeInfo {
@@ -283,5 +294,126 @@ mod time_impl {
                 (us + J2000_EPOCH_US).try_into().unwrap_or_default(),
             ))
         }
+    }
+}
+
+/// # Panics
+///
+/// Will panic if not initialized
+#[allow(clippy::module_name_repetitions)]
+#[inline]
+pub fn db_pool() -> &'static DbPool {
+    DB_POOL.get().unwrap()
+}
+
+#[allow(clippy::module_name_repetitions)]
+pub enum DbPool {
+    Sqlite(SqlitePool),
+    Postgres(PgPool),
+}
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DbKind {
+    Sqlite,
+    Postgres,
+}
+
+impl DbPool {
+    pub async fn begin(&self) -> Result<Transaction<'_>, sqlx::Error> {
+        match self {
+            DbPool::Sqlite(p) => Ok(Transaction::Sqlite(p.begin().await?)),
+            DbPool::Postgres(p) => Ok(Transaction::Postgres(p.begin().await?)),
+        }
+    }
+    pub fn kind(&self) -> DbKind {
+        match self {
+            DbPool::Sqlite(_) => DbKind::Sqlite,
+            DbPool::Postgres(_) => DbKind::Postgres,
+        }
+    }
+    pub async fn execute(&self, q: &str) -> EResult<()> {
+        match self {
+            DbPool::Sqlite(p) => {
+                sqlx::query(q).execute(p).await?;
+            }
+            DbPool::Postgres(p) => {
+                sqlx::query(q).execute(p).await?;
+            }
+        }
+        Ok(())
+    }
+}
+
+pub enum Transaction<'c> {
+    Sqlite(sqlx::Transaction<'c, sqlx::sqlite::Sqlite>),
+    Postgres(sqlx::Transaction<'c, sqlx::postgres::Postgres>),
+}
+
+impl Transaction<'_> {
+    pub async fn commit(self) -> Result<(), sqlx::Error> {
+        match self {
+            Transaction::Sqlite(tx) => tx.commit().await,
+            Transaction::Postgres(tx) => tx.commit().await,
+        }
+    }
+    pub fn kind(&self) -> DbKind {
+        match self {
+            Transaction::Sqlite(_) => DbKind::Sqlite,
+            Transaction::Postgres(_) => DbKind::Postgres,
+        }
+    }
+    pub async fn execute(&mut self, q: &str) -> EResult<()> {
+        match self {
+            Transaction::Sqlite(p) => {
+                sqlx::query(q).execute(&mut **p).await?;
+            }
+            Transaction::Postgres(p) => {
+                sqlx::query(q).execute(&mut **p).await?;
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Initialize database, must be called first and only once,
+/// enables module-wide pool
+#[allow(clippy::module_name_repetitions)]
+pub async fn db_init(conn: &str, pool_size: u32, timeout: Duration) -> EResult<()> {
+    DB_POOL
+        .set(create_pool(conn, pool_size, timeout).await?)
+        .map_err(|_| Error::core("unable to set DB_POOL"))?;
+    Ok(())
+}
+
+/// Creates a pool to use it without the module
+pub async fn create_pool(conn: &str, pool_size: u32, timeout: Duration) -> EResult<DbPool> {
+    if conn.starts_with("sqlite://") {
+        let opts = SqliteConnectOptions::from_str(conn)?
+            .create_if_missing(true)
+            .synchronous(sqlx::sqlite::SqliteSynchronous::Extra)
+            .busy_timeout(timeout)
+            .log_statements(log::LevelFilter::Trace)
+            .log_slow_statements(log::LevelFilter::Warn, timeout);
+        Ok(DbPool::Sqlite(
+            SqlitePoolOptions::new()
+                .max_connections(pool_size)
+                .acquire_timeout(timeout)
+                .connect_with(opts)
+                .await?,
+        ))
+    } else if conn.starts_with("postgres://") {
+        let opts = PgConnectOptions::from_str(conn)?
+            .log_statements(log::LevelFilter::Trace)
+            .log_slow_statements(log::LevelFilter::Warn, timeout);
+        Ok(DbPool::Postgres(
+            PgPoolOptions::new()
+                .max_connections(pool_size)
+                .acquire_timeout(timeout)
+                .connect_with(opts)
+                .await?,
+        ))
+    } else {
+        Err(Error::unsupported("Unsupported database kind"))
     }
 }
