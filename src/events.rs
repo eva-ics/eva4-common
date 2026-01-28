@@ -795,6 +795,11 @@ impl<T> EventBuffer<T> {
 #[serde(untagged)]
 pub enum ReplicationStateEventExtended {
     Inventory(ReplicationNodeInventoryItem),
+    BasicItem {
+        oid: OID,
+        #[serde(flatten)]
+        event: ReplicationStateEvent,
+    },
     Basic(ReplicationStateEvent),
 }
 
@@ -802,7 +807,15 @@ impl ReplicationStateEventExtended {
     pub fn node(&self) -> &str {
         match self {
             ReplicationStateEventExtended::Basic(v) => &v.node,
+            ReplicationStateEventExtended::BasicItem { event, .. } => &event.node,
             ReplicationStateEventExtended::Inventory(v) => &v.node,
+        }
+    }
+    pub fn oid(&self) -> Option<&OID> {
+        match self {
+            ReplicationStateEventExtended::Basic(_) => None,
+            ReplicationStateEventExtended::BasicItem { oid, .. } => Some(oid),
+            ReplicationStateEventExtended::Inventory(v) => Some(&v.item.oid),
         }
     }
 }
